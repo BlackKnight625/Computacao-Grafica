@@ -1,22 +1,39 @@
 var renderer, scene, camera;
 
+/**
+ * Creates the whole Structure
+ */
 function createStructure() {
     'user strict';
 }
 
+/**
+ * Called when the window is resized
+ */
 function onResize() {
     'use strict';
 }
 
+/**
+ * Called when a key is pressed
+ * @param {*} e 
+ * Info about the pressed key
+ */
 function onKeyDown(e) {
     'use strict';
 }
 
+/**
+ * Renders the whole Structure
+ */
 function render() {
     'use strict';
     renderer.render(scene, camera);
 }
 
+/**
+ * Called at the beggining of the program
+ */
 function init() {
     'use strict'
     scene = new THREE.Scene();
@@ -39,6 +56,9 @@ function init() {
     render();
 }
 
+/**
+ * Updates the locations and rotations of the Structure
+ */
 function animate() {
     'use strict';
 }
