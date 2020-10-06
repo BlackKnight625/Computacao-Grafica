@@ -32,18 +32,31 @@ function createStructure() {
 
     g1 = new THREE.Object3D();
 
+    var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(15, 15, 70, 5), noseMaterial);
+    nose.rotation.x = Math.PI * 0.5;
+    nose.position.set(30, -10, 0);
+    g1.add(nose);
+
+
     haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
     haste.rotation.z = Math.PI * -(1/3);
     haste.position.set(-8+10, 0, 0);
     g1.add(haste);
 
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 25, 30), hasteMaterial);
     haste.rotation.z = Math.PI * (1/3);
-    haste.position.set(8+10, 0, 0);
+    haste.position.set(8+13, 0, 0);
     g1.add(haste);
 
     haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
     haste.position.set(-2+10, -6, 0);
+    g1.add(haste);
+
+
+    //haste fora do sitio (base do nariz)
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
+    haste.position.set(0, 0, 0);
     g1.add(haste);
 
     g0.position.set(0+10, -16, 0);
