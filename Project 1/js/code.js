@@ -33,9 +33,8 @@ function createStructure() {
     g1 = new THREE.Object3D();
 
     var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
-    var nose = new THREE.Mesh(new THREE.BoxGeometry(15, 15, 70, 5), noseMaterial);
-    nose.rotation.x = Math.PI * 0.5;
-    nose.position.set(30, -10, 0);
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(15, 20, 3), noseMaterial);
+    nose.position.set(25, -20, 0);
     g1.add(nose);
 
 
