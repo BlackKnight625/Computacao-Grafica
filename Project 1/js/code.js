@@ -3,6 +3,8 @@ var g0, g1, g2;
 var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
 
 function createSet0() {
+    'user strict';
+
     g0 = new THREE.Object3D();
     var mouthMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
     var mouth = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 3, 30), mouthMaterial);
