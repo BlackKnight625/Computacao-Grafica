@@ -1,7 +1,8 @@
 var renderer, scene, camera;
 var g0, g1, g2;
 var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
-var clock = new THREE.clock();
+var clock = new THREE.Clock();
+var pressedKeys = {};
 
 function createSet0() {
     'user strict';
@@ -81,6 +82,47 @@ function onResize() {
  */
 function onKeyDown(e) {
     'use strict';
+    var key = e.getCode;
+
+    pressedKeys[key] = true;
+
+    switch(key) {
+        case 81: //Q
+        case 113: //q
+            startRotatingGroup(g0, key, 1);
+            break;
+        case 87: //W
+        case 119: //w
+            startRotatingGroup(g0, key, -1);
+            break;
+        case 65: //A
+        case 97: //a
+            startRotatingGroup(g1, key, 1);
+            break;
+        case 68: //D
+        case 100: //d
+            startRotatingGroup(g1, key, -1);
+            break;
+        case 90: //Z
+        case 122: //z
+            startRotatingGroup(g2, key, 1);
+            break;
+        case 67: //C
+        case 99: //c
+            startRotatingGroup(g2, key, -1);
+            break;
+    }
+}
+
+/**
+ * Called when a key is released
+ * @param {*} e 
+ * Info about the released key
+ */
+function onKeyUp(e) {
+    'use strict';
+
+    pressedKeys[e.keyCode] = false;
 }
 
 /**
@@ -88,7 +130,6 @@ function onKeyDown(e) {
  */
 function render() {
     'use strict';
-    //g1.rotation.y += 0.02;
 
     requestAnimationFrame(render);
     renderer.render(scene, camera);
@@ -119,6 +160,10 @@ function init() {
     createStructure();
 
     render();
+
+    //Adding event listeners
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 }
 
 /**
@@ -128,4 +173,17 @@ function animate() {
     'use strict';
 
     var delta = clock.getDelta();
+}
+
+function startRotatingGroup(group, key, multiplier) {
+    while(pressedKeys[key]) {
+        rotateGroup(group, multiplier);
+    }
+}
+
+function rotateGroup(group, multiplier) {
+    var delta = clock.delta();
+    var angle = multiplier * delta * 2 * Math.PI; //2 spins per second
+
+    group.rotateY(angle);
 }
