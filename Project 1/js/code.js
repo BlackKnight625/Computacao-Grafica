@@ -36,8 +36,21 @@ function createStructure() {
     var nose_set = createNose();
     scene.add(nose_set);
 
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
-    haste.position.set(0, 0, 0);
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.75, 30), hasteMaterial);
+    haste.rotation.rotation
+    haste.position.set(0, 1.25, 0);
+    scene.add(haste);
+
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2, 30), hasteMaterial);
+    haste.rotation.z = Math.PI * 0.5;
+    haste.position.set(0.25, 0.75, 0);
+    scene.add(haste);
+
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.5, 30), hasteMaterial);
+    haste.position.set(1.12, -0.25, 0);
+    scene.add(haste);
+
+
 }
 
 /**
