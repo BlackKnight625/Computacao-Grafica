@@ -1,6 +1,7 @@
 var renderer, scene, camera;
 var g0, g1, g2;
 var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
+var clock = new THREE.clock();
 
 /**
  * Creates the whole Structure
@@ -78,4 +79,6 @@ function init() {
  */
 function animate() {
     'use strict';
+
+    var delta = clock.getDelta();
 }
