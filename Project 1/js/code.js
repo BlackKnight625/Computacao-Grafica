@@ -13,40 +13,24 @@ function createEye() {
     var eye_set = new THREE.Object3D();
 
     var eyeMaterial_base = new THREE.MeshBasicMaterial({color: 0xFFFDFD});
-    
-    var left_eye_base = new THREE.Mesh (new THREE.CylinderGeometry(0.8, 0.8, 0.8, 30), eyeMaterial_base);
-    left_eye_base.rotation.x = Math.PI * 0.5;
-    left_eye_base.position.set(-2,-0.75,0);
-    eye_set.add(left_eye_base);
+    var eye_base = new THREE.Mesh (new THREE.CylinderGeometry(0.5, 0.5, 0.1, 30), eyeMaterial_base);
+    eye_base.rotation.x = Math.PI * 0.5;
+    eye_base.scale.set(1.5,1,1);
+    eye_base.position.set(0,0,0);
+    eye_set.add(eye_base);
 
-    var right_eye_base = new THREE.Mesh (new THREE.CylinderGeometry(0.8, 0.8, 0.8, 30), eyeMaterial_base);
-    right_eye_base.rotation.x = Math.PI * 0.5;
-    right_eye_base.position.set(2,-0.75,0);
-    eye_set.add(right_eye_base);
 
-    var eyeMaterial_pupil = new THREE.MeshBasicMaterial({color: 0x000000});
+    var eyeMaterial_pupil = new THREE.MeshBasicMaterial({color: 0x2FE3F7});
+    var eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.3, 0.3, 0.1, 30), eyeMaterial_pupil);
+    eye_pupil.rotation.x = Math.PI * 0.5;
+    eye_pupil.position.set(0,0,0.01);
+    eye_set.add(eye_pupil);
 
-    var left_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.45, 0.45, 0.45, 30), eyeMaterial_pupil);
-    left_eye_pupil.rotation.x = Math.PI * 0.5;
-    left_eye_pupil.position.set(-2,-0.75,1);
-    eye_set.add(left_eye_pupil);
-
-    var right_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.45, 0.45, 0.45, 30), eyeMaterial_pupil);
-    right_eye_pupil.rotation.x = Math.PI * 0.5;
-    right_eye_pupil.position.set(2,-0.75,1);
-    eye_set.add(right_eye_pupil);
-
-    var eyeMaterial_iris = new THREE.MeshBasicMaterial({color: 0x2FE3F7});
-
-    var left_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.3, 0.3, 0.3, 30), eyeMaterial_iris);
-    left_eye_iris.rotation.x = Math.PI * 0.5;
-    left_eye_iris.position.set(-2,-0.75,2);
-    eye_set.add(left_eye_iris);
-
-    var right_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.3, 0.3, 0.3, 30), eyeMaterial_iris);
-    right_eye_iris.rotation.x = Math.PI * 0.5;
-    right_eye_iris.position.set(2,-0.75,2);
-    eye_set.add(right_eye_iris);
+    var eyeMaterial_iris = new THREE.MeshBasicMaterial({color: 0x000000});
+    var eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.12, 0.12, 0.1, 30), eyeMaterial_iris);
+    eye_iris.rotation.x = Math.PI * 0.5;
+    eye_iris.position.set(0,0,0.011);
+    eye_set.add(eye_iris);
 
     return eye_set;
 }
@@ -55,20 +39,20 @@ function createNose() {
     var nose_set = new THREE.Object3D();
 
     var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
-    var nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1), noseMaterial);
-    nose.position.set(0, -2, 0);
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.4), noseMaterial);
+    nose.position.set(0, 0, 0);
     nose_set.add(nose);
 
     var nostrilMaterial = new THREE.MeshBasicMaterial({color: 0x994C00});
 
-    var left_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    var left_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 30), nostrilMaterial);
     left_nostril.rotation.x = Math.PI * 0.5;
-    left_nostril.position.set(-0.25, -2.25, 0);
+    left_nostril.position.set(-0.25, -0.25, 0.01);
     nose_set.add(left_nostril);
 
-    var right_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    var right_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 30), nostrilMaterial);
     right_nostril.rotation.x = Math.PI * 0.5;
-    right_nostril.position.set(0.25, -2.25, 0);
+    right_nostril.position.set(0.25, -.25, 0.01);
     nose_set.add(right_nostril);
 
     return nose_set;
@@ -80,18 +64,23 @@ function createNose() {
 function createStructure() {
     'user strict';
 
+    g0 = new THREE.Object3D();
     g1 = new THREE.Object3D();
+    g2 = new THREE.Object3D();
 
+
+    // grupo 2: contem a boca
+    var mouthMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
+    var mouth = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.3, 30), mouthMaterial);
+    mouth.rotation.x = Math.PI * 0.5;
+    mouth.scale.set(2, 1, 1);
+    mouth.position.set(-0.37, 0, 0);
+    g2.add(mouth);
+    g2.position.set(1.12, -1, 0);
+
+    // grupo 1: contem o nariz e a boca
     var nose_set = createNose();
-    var eye_set = createEye();
-    scene.add(nose_set);
-    scene.add(eye_set);
     g1.add(nose_set);
-
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.75, 30), hasteMaterial);
-    haste.rotation.rotation
-    haste.position.set(0, 1.25, 0);
-    scene.add(haste);
 
     haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2, 30), hasteMaterial);
     haste.rotation.z = Math.PI * 0.5;
@@ -102,16 +91,34 @@ function createStructure() {
     haste.position.set(1.12, -0.25, 0);
     g1.add(haste);
 
-    var mouthMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
-    var mouth = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 3, 30), mouthMaterial);
-    mouth.rotation.x = Math.PI * 0.5;
-    mouth.scale.set(2, 1, 1);
-    mouth.position.set(0.75, -1, 0);
-    g1.add(mouth);
+    g1.add(g2);
 
-    scene.add(g1);
+    g1.position.set(0, -1.8, 0);
 
-    g0 = g1;
+    // grupo 0: contem grupo 1, olhos e as hastes
+    var left_eye = createEye();
+    left_eye.position.set(-2,-0.7,0);
+    g0.add(left_eye);
+
+    var right_eye = createEye();
+    right_eye.position.set(2, -0.7, 0);
+    g0.add(right_eye);
+
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.75, 30), hasteMaterial);
+    haste.position.set(0, 1.25 - 1.8, 0);
+    g0.add(haste);
+
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 6, 30), hasteMaterial);
+    haste.rotation.z = Math.PI * 0.5;
+    haste.position.set(0, 0, 0);
+    g0.add(haste);
+    
+    haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.75, 30), hasteMaterial);
+    haste.position.set(-2, 1.75/2 + 0.25, 0);
+    g0.add(haste);
+
+    g0.add(g1);
+    scene.add(g0);
 }
 
 /**
