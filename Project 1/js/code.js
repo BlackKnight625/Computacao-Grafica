@@ -3,6 +3,8 @@ var g0, g1, g2;
 var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
 var clock = new THREE.Clock();
 var pressedKeys = {};
+var keyActions = {};
+var delta;
 
 function createNose() {
     var nose_set = new THREE.Object3D();
@@ -55,36 +57,11 @@ function onResize() {
  */
 function onKeyDown(e) {
     'use strict';
-    var key = e.getCode;
+    var key = e.keyCode;
 
     pressedKeys[key] = true;
 
-    switch(key) {
-        case 81: //Q
-        case 113: //q
-            startRotatingGroup(g0, key, 1);
-            break;
-        case 87: //W
-        case 119: //w
-            startRotatingGroup(g0, key, -1);
-            break;
-        case 65: //A
-        case 97: //a
-            startRotatingGroup(g1, key, 1);
-            break;
-        case 68: //D
-        case 100: //d
-            startRotatingGroup(g1, key, -1);
-            break;
-        case 90: //Z
-        case 122: //z
-            startRotatingGroup(g2, key, 1);
-            break;
-        case 67: //C
-        case 99: //c
-            startRotatingGroup(g2, key, -1);
-            break;
-    }
+    console.log(key);
 }
 
 /**
@@ -95,7 +72,7 @@ function onKeyDown(e) {
 function onKeyUp(e) {
     'use strict';
 
-    pressedKeys[e.keyCode] = false;
+    delete pressedKeys[e.keyCode];
 }
 
 /**
@@ -103,6 +80,8 @@ function onKeyUp(e) {
  */
 function render() {
     'use strict';
+
+    animate();
 
     requestAnimationFrame(render);
     renderer.render(scene, camera);
@@ -137,6 +116,25 @@ function init() {
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+
+    //Adding key actions
+    addKeyActions();
+}
+
+function addKeyActions() {
+    //Rotation actions
+    keyActions[81] = function () {rotateGroup(g0, 1);}; //Q
+    keyActions[113] = function () {rotateGroup(g0, 1);}; //q
+    keyActions[87] = function () {rotateGroup(g0, -1);}; //W
+    keyActions[119] = function () {rotateGroup(g0, -1);}; //w
+    keyActions[65] = function () {rotateGroup(g1, 1);}; //A
+    keyActions[97] = function () {rotateGroup(g1, 1);}; //a
+    keyActions[68] = function () {rotateGroup(g1, -1);}; //D
+    keyActions[100] = function () {rotateGroup(g1, -1);}; //d
+    keyActions[90] = function () {rotateGroup(g2, 1);}; //Z
+    keyActions[122] = function () {rotateGroup(g2, 1);}; //z
+    keyActions[67] = function () {rotateGroup(g2, -1);}; //C
+    keyActions[99] = function () {rotateGroup(g2, -1);}; //c
 }
 
 /**
@@ -145,18 +143,16 @@ function init() {
 function animate() {
     'use strict';
 
-    var delta = clock.getDelta();
-}
+    delta = clock.getDelta();
 
-function startRotatingGroup(group, key, multiplier) {
-    while(pressedKeys[key]) {
-        rotateGroup(group, multiplier);
+    //Calling every active key actions
+    for(var key in pressedKeys) {
+        if(key in keyActions) {
+            keyActions[key]();
+        }
     }
 }
 
 function rotateGroup(group, multiplier) {
-    var delta = clock.delta();
-    var angle = multiplier * delta * 2 * Math.PI; //2 spins per second
-
-    group.rotateY(angle);
+    group.rotateY(multiplier * delta * 0.5 * Math.PI); //0.25 spin per second
 }
