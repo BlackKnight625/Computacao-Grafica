@@ -5,6 +5,9 @@ var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
 var delta;
+var translation = new THREE.Vector3();
+var angleSpeed = 0.25; //0.25 spins per second
+var translationSpeed = 0.1; //0.1 spacial unit per second
 
 function createEye() {
     var eye_set = new THREE.Object3D();
@@ -23,24 +26,24 @@ function createEye() {
 
     var eyeMaterial_pupil = new THREE.MeshBasicMaterial({color: 0x000000});
 
-    var left_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.5, 0.5, 0.5, 30), eyeMaterial_pupil);
+    var left_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.45, 0.45, 0.45, 30), eyeMaterial_pupil);
     left_eye_pupil.rotation.x = Math.PI * 0.5;
     left_eye_pupil.position.set(-2,-0.75,1);
     eye_set.add(left_eye_pupil);
 
-    var right_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.5, 0.5, 0.5, 30), eyeMaterial_pupil);
+    var right_eye_pupil = new THREE.Mesh (new THREE.CylinderGeometry(0.45, 0.45, 0.45, 30), eyeMaterial_pupil);
     right_eye_pupil.rotation.x = Math.PI * 0.5;
     right_eye_pupil.position.set(2,-0.75,1);
     eye_set.add(right_eye_pupil);
 
     var eyeMaterial_iris = new THREE.MeshBasicMaterial({color: 0x2FE3F7});
 
-    var left_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.2, 0.2, 0.2, 30), eyeMaterial_iris);
+    var left_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.3, 0.3, 0.3, 30), eyeMaterial_iris);
     left_eye_iris.rotation.x = Math.PI * 0.5;
     left_eye_iris.position.set(-2,-0.75,2);
     eye_set.add(left_eye_iris);
 
-    var right_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.2, 0.2, 0.2, 30), eyeMaterial_iris);
+    var right_eye_iris = new THREE.Mesh (new THREE.CylinderGeometry(0.3, 0.3, 0.3, 30), eyeMaterial_iris);
     right_eye_iris.rotation.x = Math.PI * 0.5;
     right_eye_iris.position.set(2,-0.75,2);
     eye_set.add(right_eye_iris);
@@ -127,8 +130,6 @@ function onKeyDown(e) {
     var key = e.keyCode;
 
     pressedKeys[key] = true;
-
-    console.log(key);
 }
 
 /**
@@ -202,6 +203,12 @@ function addKeyActions() {
     keyActions[122] = function () {rotateGroup(g2, 1);}; //z
     keyActions[67] = function () {rotateGroup(g2, -1);}; //C
     keyActions[99] = function () {rotateGroup(g2, -1);}; //c
+
+    //Translation actions
+    keyActions[37] = function() {addToTranslation(-1, 0, 0)}; //Left arrow
+    keyActions[38] = function() {addToTranslation(0, 0, -1)}; //Up arrow
+    keyActions[39] = function() {addToTranslation(1, 0, 0)}; //Right arrow
+    keyActions[40] = function() {addToTranslation(0, 0, 1)}; //Down arrow
 }
 
 /**
@@ -212,14 +219,25 @@ function animate() {
 
     delta = clock.getDelta();
 
+    //Resetting the translation vector
+    translation.set(0, 0, 0);
+
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
             keyActions[key]();
         }
     }
+
+    g0.translateOnAxis(translation.normalize(), translationSpeed);
+}
+
+function addToTranslation(x, y, z) {
+    translation.x += x;
+    translation.y += y;
+    translation.z += z;
 }
 
 function rotateGroup(group, multiplier) {
-    group.rotateY(multiplier * delta * 0.5 * Math.PI); //0.25 spin per second
+    group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
 }
