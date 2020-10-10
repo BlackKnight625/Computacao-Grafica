@@ -34,7 +34,7 @@ function createStructure() {
     g1 = new THREE.Object3D();
 
     var nose_set = createNose();
-    scene.add(nose_set);
+    g1.add(nose_set);
 
     haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.75, 30), hasteMaterial);
     haste.rotation.rotation
@@ -44,13 +44,20 @@ function createStructure() {
     haste = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2, 30), hasteMaterial);
     haste.rotation.z = Math.PI * 0.5;
     haste.position.set(0.25, 0.75, 0);
-    scene.add(haste);
+    g1.add(haste);
 
     haste = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.5, 30), hasteMaterial);
     haste.position.set(1.12, -0.25, 0);
-    scene.add(haste);
+    g1.add(haste);
 
+    var mouthMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
+    var mouth = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 3, 30), mouthMaterial);
+    mouth.rotation.x = Math.PI * 0.5;
+    mouth.scale.set(2, 1, 1);
+    mouth.position.set(0.75, -1, 0);
+    g1.add(mouth);
 
+    scene.add(g1);
 }
 
 /**
