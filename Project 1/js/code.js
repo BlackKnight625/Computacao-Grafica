@@ -3,6 +3,28 @@ var g0, g1, g2;
 var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
 var clock = new THREE.clock();
 
+function createNose() {
+    var nose_set = new THREE.Object3D();
+
+    var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 3), noseMaterial);
+    nose.position.set(0, 0, 0);
+    nose_set.add(nose);
+
+    var nostrilMaterial = new THREE.MeshBasicMaterial({color: 0x994C00});
+    var left_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    left_nostril.rotation.x = Math.PI * 0.5;
+    left_nostril.position.set(-0.25, -0.25, 0);
+    nose_set.add(left_nostril);
+
+    var right_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    right_nostril.rotation.x = Math.PI * 0.5;
+    right_nostril.position.set(0.25, -0.25, 0);
+    nose_set.add(right_nostril);
+
+    return nose_set;
+}
+
 /**
  * Creates the whole Structure
  */
@@ -11,11 +33,8 @@ function createStructure() {
 
     g1 = new THREE.Object3D();
 
-    var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
-    var nose = new THREE.Mesh(new THREE.BoxGeometry(15, 20, 3), noseMaterial);
-    nose.position.set(25, -20, 0);
-    g1.add(nose);
-
+    var nose_set = createNose();
+    scene.add(nose_set);
 
     haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
     haste.position.set(0, 0, 0);
@@ -61,7 +80,7 @@ function init() {
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.x = 0;
     camera.position.y = 0;
-    camera.position.z = 200;
+    camera.position.z = 20;
     camera.lookAt(scene.position);
 
     var axes = new THREE.AxisHelper(20);
