@@ -49,20 +49,20 @@ function createNose() {
     var nose_set = new THREE.Object3D();
 
     var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
-    var nose = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 3), noseMaterial);
-    nose.position.set(0, 0, 0);
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1), noseMaterial);
+    nose.position.set(0, -2, 0);
     nose_set.add(nose);
 
     var nostrilMaterial = new THREE.MeshBasicMaterial({color: 0x994C00});
 
     var left_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
     left_nostril.rotation.x = Math.PI * 0.5;
-    left_nostril.position.set(-0.25, -0.25, 0);
+    left_nostril.position.set(-0.25, -2.25, 0);
     nose_set.add(left_nostril);
 
     var right_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
     right_nostril.rotation.x = Math.PI * 0.5;
-    right_nostril.position.set(0.25, -0.25, 0);
+    right_nostril.position.set(0.25, -2.25, 0);
     nose_set.add(right_nostril);
 
     return nose_set;
