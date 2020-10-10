@@ -4,24 +4,26 @@ var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
 var clock = new THREE.Clock();
 var pressedKeys = {};
 
-function createSet0() {
-    'user strict';
+function createNose() {
+    var nose_set = new THREE.Object3D();
 
-    g0 = new THREE.Object3D();
-    var mouthMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
-    var mouth = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 3, 30), mouthMaterial);
-    mouth.rotation.x = Math.PI * 0.5; 
-    mouth.position.set(-7.5, -30, 0);
-    g0.add(mouth);
+    var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 3), noseMaterial);
+    nose.position.set(0, 0, 0);
+    nose_set.add(nose);
 
-    var haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 30, 30), hasteMaterial);
-    haste.position.set(-10, -15, 0);
-    g0.add(haste);
+    var nostrilMaterial = new THREE.MeshBasicMaterial({color: 0x994C00});
+    var left_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    left_nostril.rotation.x = Math.PI * 0.5;
+    left_nostril.position.set(-0.25, -0.25, 0);
+    nose_set.add(left_nostril);
 
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 30, 30), hasteMaterial);
-    haste.rotation.z = Math.PI * 0.5;
-    haste.position.set(-10, 0, 0);
-    g0.add(haste);
+    var right_nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3, 30), nostrilMaterial);
+    right_nostril.rotation.x = Math.PI * 0.5;
+    right_nostril.position.set(0.25, -0.25, 0);
+    nose_set.add(right_nostril);
+
+    return nose_set;
 }
 
 /**
@@ -30,42 +32,13 @@ function createSet0() {
 function createStructure() {
     'user strict';
 
-    createSet0();
-
-    //scene.add(g0);
-
     g1 = new THREE.Object3D();
 
-    var noseMaterial = new THREE.MeshBasicMaterial({color: 0xFFCC99});
-    var nose = new THREE.Mesh(new THREE.BoxGeometry(15, 20, 3), noseMaterial);
-    nose.position.set(25, -20, 0);
-    g1.add(nose);
+    var nose_set = createNose();
+    scene.add(nose_set);
 
-
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
-    haste.rotation.z = Math.PI * -(1/3);
-    haste.position.set(-8+10, 0, 0);
-    g1.add(haste);
-
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 25, 30), hasteMaterial);
-    haste.rotation.z = Math.PI * (1/3);
-    haste.position.set(8+13, 0, 0);
-    g1.add(haste);
-
-    haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
-    haste.position.set(-2+10, -6, 0);
-    g1.add(haste);
-
-
-    //haste fora do sitio (base do nariz)
     haste = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 20, 30), hasteMaterial);
     haste.position.set(0, 0, 0);
-    g1.add(haste);
-
-    g0.position.set(0+10, -16, 0);
-    g1.add(g0);
-
-    scene.add(g1);
 }
 
 /**
@@ -149,7 +122,7 @@ function init() {
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.x = 0;
     camera.position.y = 0;
-    camera.position.z = 200;
+    camera.position.z = 20;
     camera.lookAt(scene.position);
 
     var axes = new THREE.AxisHelper(20);
