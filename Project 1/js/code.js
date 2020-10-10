@@ -55,8 +55,6 @@ function createStructure() {
     haste = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.5, 30), hasteMaterial);
     haste.position.set(1.12, -0.25, 0);
     scene.add(haste);
-
-    g0 = nose_set;
 }
 
 /**
