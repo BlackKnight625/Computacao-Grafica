@@ -5,6 +5,9 @@ var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
 var delta;
+var translation = new THREE.Vector3();
+var angleSpeed = 0.25; //0.25 spins per second
+var translationSpeed = 0.1; //0.1 spacial unit per second
 
 function createNose() {
     var nose_set = new THREE.Object3D();
@@ -53,7 +56,7 @@ function createStructure() {
     haste.position.set(1.12, -0.25, 0);
     scene.add(haste);
 
-
+    g0 = nose_set;
 }
 
 /**
@@ -73,8 +76,6 @@ function onKeyDown(e) {
     var key = e.keyCode;
 
     pressedKeys[key] = true;
-
-    console.log(key);
 }
 
 /**
@@ -148,6 +149,12 @@ function addKeyActions() {
     keyActions[122] = function () {rotateGroup(g2, 1);}; //z
     keyActions[67] = function () {rotateGroup(g2, -1);}; //C
     keyActions[99] = function () {rotateGroup(g2, -1);}; //c
+
+    //Translation actions
+    keyActions[37] = function() {addToTranslation(-1, 0, 0)}; //Left arrow
+    keyActions[38] = function() {addToTranslation(0, 0, -1)}; //Up arrow
+    keyActions[39] = function() {addToTranslation(1, 0, 0)}; //Right arrow
+    keyActions[40] = function() {addToTranslation(0, 0, 1)}; //Down arrow
 }
 
 /**
@@ -158,14 +165,25 @@ function animate() {
 
     delta = clock.getDelta();
 
+    //Resetting the translation vector
+    translation.set(0, 0, 0);
+
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
             keyActions[key]();
         }
     }
+
+    g0.translateOnAxis(translation.normalize(), translationSpeed);
+}
+
+function addToTranslation(x, y, z) {
+    translation.x += x;
+    translation.y += y;
+    translation.z += z;
 }
 
 function rotateGroup(group, multiplier) {
-    group.rotateY(multiplier * delta * 0.5 * Math.PI); //0.25 spin per second
+    group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
 }
