@@ -4,6 +4,7 @@ var hasteMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
 var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
+var pressedKeyActions = {};
 var delta;
 var translation = new THREE.Vector3();
 var angleSpeed = 0.25; //0.25 spins per second
@@ -126,6 +127,13 @@ function createStructure() {
  */
 function onResize() {
     'use strict';
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
 }
 
 /**
@@ -138,6 +146,12 @@ function onKeyDown(e) {
     var key = e.keyCode;
 
     pressedKeys[key] = true;
+
+    if(key in pressedKeyActions) {
+        pressedKeyActions[key]();
+    }
+
+    console.log(key);
 }
 
 /**
@@ -192,6 +206,7 @@ function init() {
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("resize", onResize);
 
     //Adding key actions
     addKeyActions();
@@ -217,6 +232,14 @@ function addKeyActions() {
     keyActions[38] = function() {addToTranslation(0, 0, -1)}; //Up arrow
     keyActions[39] = function() {addToTranslation(1, 0, 0)}; //Right arrow
     keyActions[40] = function() {addToTranslation(0, 0, 1)}; //Down arrow
+
+    //Switching camera
+    pressedKeyActions[49] = function() {switchCameraPosition(0, 0, 20)}; //1
+    pressedKeyActions[50] = function() {switchCameraPosition(0, 20, 0)}; //2
+    pressedKeyActions[51] = function() {switchCameraPosition(20, 0, 0)}; //3
+
+    //Switching wireframe
+    pressedKeyActions[52] = function() {switchWireframe()}; //4
 }
 
 /**
@@ -248,4 +271,19 @@ function addToTranslation(x, y, z) {
 
 function rotateGroup(group, multiplier) {
     group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
+}
+
+function switchCameraPosition(x, y, z) {
+    camera.position.x = x;
+    camera.position.y = y;
+    camera.position.z = z;
+    camera.lookAt(scene.position);
+}
+
+function switchWireframe() {
+    scene.traverse(function (node) {
+        if (node instanceof THREE.Mesh) {
+            node.material.wireframe = !node.material.wireframe;
+        }
+    });
 }
