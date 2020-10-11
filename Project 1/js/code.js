@@ -7,7 +7,7 @@ var keyActions = {};
 var delta;
 var translation = new THREE.Vector3();
 var angleSpeed = 0.25; //0.25 spins per second
-var translationSpeed = 0.1; //0.1 spacial unit per second
+var translationSpeed = 10; //10 spacial unit per second
 
 function createEye() {
     var eye_set = new THREE.Object3D();
@@ -253,7 +253,7 @@ function animate() {
         }
     }
 
-    g0.translateOnAxis(translation.normalize(), translationSpeed);
+    g0.translateOnAxis(translation.normalize(), translationSpeed * delta);
 }
 
 function addToTranslation(x, y, z) {
