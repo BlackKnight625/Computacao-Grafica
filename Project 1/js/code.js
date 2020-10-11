@@ -281,9 +281,13 @@ function switchCameraPosition(x, y, z) {
 }
 
 function switchWireFrame() {
+    var materials = {};
     scene.traverse(function (node) {
         if (node instanceof THREE.Mesh) {
-            node.material.wireframe = !node.material.wireframe;
+            if (!(node.material.uuid in materials)) {
+                node.material.wireframe = !node.material.wireframe;
+                materials[node.material.uuid] = true;
+            } 
         }
     });
 }
