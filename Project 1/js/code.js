@@ -150,8 +150,6 @@ function onKeyDown(e) {
     if(key in pressedKeyActions) {
         pressedKeyActions[key]();
     }
-
-    console.log(key);
 }
 
 /**
@@ -239,7 +237,7 @@ function addKeyActions() {
     pressedKeyActions[51] = function() {switchCameraPosition(20, 0, 0)}; //3
 
     //Switching wireframe
-    pressedKeyActions[52] = function() {switchWireframe()}; //4
+    pressedKeyActions[52] = function() {switchWireFrame()}; //4
 }
 
 /**
@@ -280,7 +278,7 @@ function switchCameraPosition(x, y, z) {
     camera.lookAt(scene.position);
 }
 
-function switchWireframe() {
+function switchWireFrame() {
     scene.traverse(function (node) {
         if (node instanceof THREE.Mesh) {
             node.material.wireframe = !node.material.wireframe;
