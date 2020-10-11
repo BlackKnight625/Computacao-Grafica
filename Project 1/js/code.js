@@ -258,7 +258,9 @@ function animate() {
         }
     }
 
-    g0.translateOnAxis(translation.normalize(), translationSpeed * delta);
+    if(translation.length() != 0) {
+        g0.position.add(translation.normalize().multiplyScalar(translationSpeed * delta));
+    }
 }
 
 function addToTranslation(x, y, z) {
