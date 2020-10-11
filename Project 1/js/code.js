@@ -126,6 +126,13 @@ function createStructure() {
  */
 function onResize() {
     'use strict';
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
 }
 
 /**
@@ -136,6 +143,14 @@ function onResize() {
 function onKeyDown(e) {
     'use strict';
     var key = e.keyCode;
+
+    console.log(key);
+    
+    //WireFrame actions
+    if (key == 52) {
+        switchWireFrame();
+        return;
+    }
 
     pressedKeys[key] = true;
 }
@@ -192,6 +207,7 @@ function init() {
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("resize", onResize);
 
     //Adding key actions
     addKeyActions();
@@ -248,4 +264,12 @@ function addToTranslation(x, y, z) {
 
 function rotateGroup(group, multiplier) {
     group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
+}
+
+function switchWireFrame() {
+    scene.traverse(function (node) {
+        if (node instanceof THREE.Mesh) {
+            node.material.wireframe = !node.material.wireframe;
+        }
+    });
 }
