@@ -10,6 +10,7 @@ var translation = new THREE.Vector3();
 var angleSpeed = 0.25; //0.25 spins per second
 var translationSpeed = 10; //10 spacial unit per second
 
+//Creates the eyes
 function createEye() {
     var eye_set = new THREE.Object3D();
 
@@ -36,6 +37,7 @@ function createEye() {
     return eye_set;
 }
 
+//Creates the nose
 function createNose() {
     var nose_set = new THREE.Object3D();
 
@@ -60,7 +62,7 @@ function createNose() {
 }
 
 /**
- * Creates the whole Structure
+ Creates the whole Structure
  */
 function createStructure() {
     'user strict';
