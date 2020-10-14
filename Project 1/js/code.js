@@ -121,6 +121,7 @@ function createStructure() {
     g0.add(haste);
 
     g0.add(g1);
+    g0.scale.set(10, 10, 10);
     scene.add(g0);
 }
 
@@ -133,7 +134,10 @@ function onResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.left = window.innerWidth / - 16;
+        camera.right = window.innerWidth / 16;
+        camera.top = window.innerHeight / 16;
+        camera.bottom = window.innerHeight / - 16;
         camera.updateProjectionMatrix();
     }
 }
@@ -188,7 +192,8 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16,
+        -200, 500);
     camera.position.x = 0;
     camera.position.y = 0;
     camera.position.z = 20;
@@ -260,7 +265,9 @@ function animate() {
         }
     }
 
-    g0.translateOnAxis(translation.normalize(), translationSpeed * delta);
+    if(translation.length() != 0) {
+        g0.position.add(translation.normalize().multiplyScalar(translationSpeed * delta));
+    }
 }
 
 function addToTranslation(x, y, z) {
@@ -281,9 +288,13 @@ function switchCameraPosition(x, y, z) {
 }
 
 function switchWireFrame() {
+    var materials = {};
     scene.traverse(function (node) {
         if (node instanceof THREE.Mesh) {
-            node.material.wireframe = !node.material.wireframe;
+            if (!(node.material.uuid in materials)) {
+                node.material.wireframe = !node.material.wireframe;
+                materials[node.material.uuid] = true;
+            } 
         }
     });
 }
