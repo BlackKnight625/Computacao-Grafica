@@ -1,4 +1,9 @@
 var renderer, scene, camera;
+var clock = new THREE.Clock();
+var pressedKeys = {};
+var keyActions = {};
+var pressedKeyActions = {};
+var delta;
 
 function createStructure() {
 
@@ -51,10 +56,44 @@ function init() {
     addKeyActions();
 }
 
+/**
+ * Called when a key is pressed
+ * @param {*} e 
+ * Info about the pressed key
+ */
+function onKeyDown(e) {
+    'use strict';
+    var key = e.keyCode;
+
+    pressedKeys[key] = true;
+
+    if(key in pressedKeyActions) {
+        pressedKeyActions[key]();
+    }
+}
+
+/**
+ * Called when a key is released
+ * @param {*} e 
+ * Info about the released key
+ */
+function onKeyUp(e) {
+    'use strict';
+
+    delete pressedKeys[e.keyCode];
+}
+
 function addKeyActions() {
 
 }
 
 function animate() {
 
+
+    //Calling every active key actions
+    for(var key in pressedKeys) {
+        if(key in keyActions) {
+            keyActions[key]();
+        }
+    }
 }
