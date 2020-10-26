@@ -1,5 +1,17 @@
 var renderer, scene, camera;
 
+class MotionEquation {
+    constructor() {
+
+    }
+}
+
+class Ball {
+    constructor() {
+        this.motionEq = new MotionEquation();
+    }
+}
+
 function createStructure() {
 
 }
