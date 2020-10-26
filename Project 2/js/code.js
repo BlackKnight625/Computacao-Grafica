@@ -27,9 +27,9 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.OrthographicCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.x = 0;
-    camera.position.y = 0;
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.x = 20;
+    camera.position.y = 20;
     camera.position.z = 20;
     camera.lookAt(scene.position);
 
