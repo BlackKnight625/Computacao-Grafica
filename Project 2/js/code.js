@@ -1,5 +1,3 @@
-const THREE = require("./three");
-
 var renderer, scene, camera;
 var clock = new THREE.Clock();
 var pressedKeys = {};
