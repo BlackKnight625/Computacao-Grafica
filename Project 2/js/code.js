@@ -1,3 +1,5 @@
+const THREE = require("./three");
+
 var renderer, scene, camera;
 var clock = new THREE.Clock();
 var pressedKeys = {};
@@ -5,19 +7,89 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 
-class MotionEquation {
-    velocity = new THREE.Vector3(0, 0, 0);
-    acceleration = new THREE.Vector3(0, -9.8, 0);
-    ball;
-
-    constructor(ball) {
-        this.ball = ball;
-    }
-}
+//Lists of objects and objects for collision detection
+var balls = [];
+var walls = [];
+var tableTop;
 
 class Ball {
+    velocity = new THREE.Vector3();
+    acceleration = new THREE.Vector3(0, -9.8, 0)
+
     constructor() {
-        this.motionEq = new MotionEquation();
+        
+
+        balls.push(this);
+    }
+    
+    /**
+     * Returns a vector representing the position in which the ball will be if it moves foward, given its
+     * current velocity and acceleration
+     */
+    getNewPosition() {
+        newPosition = new THREE.Vector3();
+
+        newPosition.x = this.getCenterPosition(0) + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+        newPosition.y = this.getCenterPosition(1) + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+        newPosition.z = this.getCenterPosition(2) + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+
+        return newPosition;
+    }
+
+    getNewVelocity() {
+        newVelocity = new THREE.Vector3();
+
+        newVelocity.x = velocity.x + delta * this.acceleration.x;
+        newVelocity.y = velocity.y + delta * this.acceleration.y;
+        newVelocity.z = velocity.z + delta * this.acceleration.z;
+
+        return newVelocity;
+    }
+
+    getNewAcceleration() {
+        newAcceleration = new THREE.Vector3();
+
+        //Simulating friction
+        if(this.velocity.x > 0) {
+            newAcceleration.x = 0.2;
+        }
+        if(this.velocity.z > 0) {
+            newAcceleration.z = 0.2;
+        }
+
+        return newAcceleration;
+    }
+
+    getCenterPosition() {
+
+    }
+
+    getCenterPosition(coordinate) {
+
+    }
+
+    setCenterPosition(coordinate, value) {
+
+    }
+
+    collidesWithWall(wallNumber) {
+
+    }
+
+    collidesWithBall(ball) {
+
+    }
+
+    findIntersectionWithWall(wallNumber) {
+
+    }
+
+    processWallCollision(wallNumber) {
+
+    }
+
+    processBallCollision(ball) {
+
     }
 }
 
@@ -58,6 +130,8 @@ function addLateralInnerWall(obj, x, y, z) {
 
     wall.position.set(x, y, z);
 
+    walls.push(wall);
+
     obj.add(wall);
 }
 
@@ -77,6 +151,8 @@ function addBaseInnerWall(obj, x, y, z) {
     var wall = new THREE.Mesh(wallGeometry, wallMaterial);
 
     wall.position.set(x, y, z);
+
+    walls.push(wall);
 
     obj.add(wall);
 }
