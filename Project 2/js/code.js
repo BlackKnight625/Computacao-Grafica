@@ -4,6 +4,8 @@ var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
+var poolCueList= [];
+
 
 class MotionEquation {
     velocity = new THREE.Vector3(0, 0, 0);
@@ -20,6 +22,21 @@ class Ball {
         this.motionEq = new MotionEquation();
     }
 }
+
+class PoolCue{
+    constructor(x, y, z, a, b){
+        var poolCueMaterial = new THREE.MeshBasicMaterial({color: 0xff66b2});
+        var poolCueGeometry = new THREE.CylinderGeometry(1, 3, 100, 30);
+        var poolCue = new THREE.Mesh(poolCueGeometry, poolCueMaterial);
+
+        poolCue.rotation.x += a * Math.PI;
+        poolCue.rotation.z += b * Math.PI;
+        poolCue.position.set(x, y, z);
+        scene.add(poolCue);
+
+    }
+}
+
 
 function createTableTop(obj, x, y, z) {
     var tableMaterial = new THREE.MeshBasicMaterial({color: 0x337900});
@@ -122,6 +139,16 @@ function createStructure() {
     addBaseOuterWall(table, -157, 4, 0);
     addBaseInnerWall(table, 147, 4, 0);
     addBaseOuterWall(table, 157, 4, 0);
+
+    // create pool cues
+    poolCueList.push(new PoolCue(222, 8, 0, 0, 0.5 ));
+    poolCueList.push(new PoolCue(-222, 8, 0, 0, -0.5 ));
+    poolCueList.push(new PoolCue(-54, 8, 141, -0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, 141, -0.5, 0));
+    poolCueList.push(new PoolCue(-54, 8, -141, 0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, -141, 0.5, 0));
+
+
 
     scene.add(table);
 }
