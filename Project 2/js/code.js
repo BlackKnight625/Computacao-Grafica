@@ -1,9 +1,27 @@
+const THREE = require("./three");
+
 var renderer, scene, camera;
 var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
+
+class MotionEquation {
+    velocity = new THREE.Vector3(0, 0, 0);
+    acceleration = new THREE.Vector3(0, -9.8, 0);
+    ball;
+
+    constructor(ball) {
+        this.ball = ball;
+    }
+}
+
+class Ball {
+    constructor() {
+        this.motionEq = new MotionEquation();
+    }
+}
 
 function createStructure() {
 
@@ -15,6 +33,7 @@ function createStructure() {
 function render() {
     'use strict';
 
+    updatePositionsAndCheckCollisions();
     animate();
 
     requestAnimationFrame(render);
@@ -84,6 +103,10 @@ function onKeyUp(e) {
 }
 
 function addKeyActions() {
+
+}
+
+function updatePositionsAndCheckCollisions() {
 
 }
 
