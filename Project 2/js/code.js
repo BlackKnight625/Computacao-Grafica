@@ -11,7 +11,7 @@ var poolCueList= [];
 
 //Lists of objects and objects for collision detection
 var balls = [];
-var walls = [];
+var walls = []; //Contains the wall's bounding boxes
 var tableTop;
 
 class Ball {
@@ -70,20 +70,64 @@ class Ball {
 
     }
 
-    setCenterPosition(coordinate, value) {
-
-    }
-
+    /**
+     * Checks for collisions with the given wall number
+     * @param {Number} wallNumber 
+     * The given wall number
+     * @returns {boolean}
+     * True if the ball will collide with the wall
+     */
     collidesWithWall(wallNumber) {
-
+        newPosition = this.getNewPosition();
+        wall = walls[wallNumber]
+        
+        return wall.intersectsSphere(new THREE.Sphere(newPosition, 4));
     }
 
     collidesWithBall(ball) {
-
+        
     }
 
     findIntersectionWithWall(wallNumber) {
+        wall = walls[wallNumber]
+        intersenction;
+        pointCandidates = [];
 
+        for(wall in walls) {
+            //Adding 4 center positions to the list
+            pointCandidates.push(this.getCenterPosition().clone());
+        }
+
+        //Making the points point to the 4 sphere highest/lowest x/z points
+        pointCandidates[0].x += getRadius();
+        pointCandidates[1].z += getRadius();
+        pointCandidates[2].x -= getRadius();
+        pointCandidates[3].z -= getRadius();
+
+        if(Math.abs(wall.min.x) == Math.abs(wall.max.x)) {
+            //Dealing with an X-stretched wall
+            minZ = Math.min(Math.abs(wall.min.z), Math.abs(wall.max.z));
+
+            if(wall.max.z < 0) {
+                minZ = -minZ;
+            }
+
+            multiplier = velocity.z / (minZ - this.getCenterPosition().z);
+            intersection = new THREE.Vector3(velocity.x / multiplier, this.getCenterPosition().y, minZ);
+        }
+        else {
+            //Dealing with a Z-stretched wall
+            minX = Math.min(Math.abs(wall.min.x), Math.abs(wall.max.x));
+
+            if(wall.max.x < 0) {
+                minX = -minX;
+            }
+
+            multiplier = velocity.x / (minX - this.getCenterPosition().x);
+            intersection = new THREE.Vector3(minX, this.getCenterPosition().y, velocity.z / multiplier);
+        }
+
+        return intersection;
     }
 
     processWallCollision(wallNumber) {
@@ -149,6 +193,11 @@ function addLateralInnerWall(obj, x, y, z) {
 
     walls.push(wall);
 
+    wallGeometry.computeBoundingBox();
+
+    box = wallGeometry.boundingBox.clone().applyMatrix4(wall.matrixWorld);
+    box.translate(wall.position);
+
     obj.add(wall);
 }
 
@@ -170,6 +219,11 @@ function addBaseInnerWall(obj, x, y, z) {
     wall.position.set(x, y, z);
 
     walls.push(wall);
+
+    wallGeometry.computeBoundingBox();
+
+    box = wallGeometry.boundingBox.clone().applyMatrix4(wall.matrixWorld);
+    box.translate(wall.position);
 
     obj.add(wall);
 }
