@@ -3,10 +3,10 @@ var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
-var delta;
-var balls = [];
+var delta = 0;
 var poolCueList= [];
 
+var floorY;
 
 //Lists of objects and objects for collision detection
 var balls = [];
@@ -14,8 +14,10 @@ var walls = []; //Contains the wall's bounding boxes
 var tableTop;
 
 class Ball {
-    velocity = new THREE.Vector3();
-    acceleration = new THREE.Vector3(0, -9.8, 0)
+    velocity = new THREE.Vector3(0, 0, 0);
+    acceleration = new THREE.Vector3(0, 0, 0);
+
+
     constructor(radius) {
         this.radius = radius;
 
@@ -42,19 +44,25 @@ class Ball {
         var y = 8+radius/2;
         var z = this.getRndInteger(-58, 58);
 
+        mesh.position.set(x, y, z)
+
         var pos = this.goodPosition(x, y, z);
 
         mesh.position.set(pos[0], pos[1], pos[2]);
 
-        this.pos = pos;
-
         this.mesh = mesh;
+
+        console.log("Created ball at", pos, mesh, mesh.position);
 
         // needs to check if new random ball isnt where another ball is
     }
 
     getPosition() {
-        return this.pos;
+        return this.mesh.position;
+    }
+
+    setPosition(newPosition) {
+        this.mesh.position.set(newPosition.x, newPosition.y, newPosition.z);
     }
 
     goodPosition(x, y, z) {
@@ -66,7 +74,7 @@ class Ball {
         var ball_pos;
         for (var i = 0; i < balls.length; i++) {
             ball_pos = balls[i].getPosition();
-            if (distanceBetween(x, z, ball_pos[0], ball_pos[2]) < this.radius) {
+            if (distanceBetween(x, z, ball_pos.x, ball_pos.z) < this.radius) {
                 pos[0] = this.getRndInteger(-130, 130);
                 pos[2] = this.getRndInteger(-58, 58);
                 return this.goodPosition(pos[0], pos[1], pos[2]);
@@ -121,29 +129,36 @@ class Ball {
     /**
      * Returns a vector representing the position in which the ball will be if it moves foward, given its
      * current velocity and acceleration
+     * @param {Number} multiplier
+     * A multiplier for the position (ex: a multiplier of 0.5 means the returned position will be
+     * half-way of the actual position)
      */
-    getNewPosition() {
-        newPosition = new THREE.Vector3();
+    getNewPosition(multiplier = 1) {
+        var newPosition = new THREE.Vector3();
 
-        newPosition.x = this.getCenterPosition(0) + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
-        newPosition.y = this.getCenterPosition(1) + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
-        newPosition.z = this.getCenterPosition(2) + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+        var time = delta * multiplier;
+
+        newPosition.x = this.getPosition().x + time * this.velocity.x + 0.5 * time * time * this.acceleration.x;
+        newPosition.y = this.getPosition().y + time * this.velocity.y + 0.5 * time * time * this.acceleration.y;
+        newPosition.z = this.getPosition().z + time * this.velocity.z + 0.5 * time * time * this.acceleration.z;
+
+        console.log("GetNewPosition", multiplier, time, this.getPosition(), newPosition);
 
         return newPosition;
     }
 
     getNewVelocity() {
-        newVelocity = new THREE.Vector3();
+        var newVelocity = new THREE.Vector3();
 
-        newVelocity.x = velocity.x + delta * this.acceleration.x;
-        newVelocity.y = velocity.y + delta * this.acceleration.y;
-        newVelocity.z = velocity.z + delta * this.acceleration.z;
+        newVelocity.x = this.velocity.x + delta * this.acceleration.x;
+        newVelocity.y = this.velocity.y + delta * this.acceleration.y;
+        newVelocity.z = this.velocity.z + delta * this.acceleration.z;
 
         return newVelocity;
     }
 
     getNewAcceleration() {
-        newAcceleration = new THREE.Vector3();
+        var newAcceleration = new THREE.Vector3();
 
         //Simulating friction
         if(this.velocity.x > 0) {
@@ -156,76 +171,115 @@ class Ball {
         return newAcceleration;
     }
 
-    getCenterPosition() {
+    updateBall(multiplier = 1) {
+        for(var i = 0; i < walls.length; i++) {
+            var wall = walls[i];
+            if(this.collidesWithWall(wall, multiplier)) {
+                var intersection = this.findIntersectionWithWall(wall, this.getNewPosition(multiplier));
 
-    }
+                this.processWallCollision(intersection.intersection, intersection.normal, intersection.fraction);
+                return;
+            }
+        }
 
-    getCenterPosition(coordinate) {
+        for(var i = 0; i < balls.length; i++) {
+            var ball = balls[i];
+            if(ball != this) {
+                if(this.collidesWithBall(ball)) {
+                    //TODO
+                }
+            }
+        }
 
+        if(this.collidesWithFloor()) {
+            //TODO
+        }
+
+        console.log("Previous position: ", this.getPosition());
+        this.setPosition(this.getNewPosition(multiplier));
+        console.log("New position: ", this.getPosition());
+
+        this.velocity = this.getNewVelocity();
+        this.acceleration = this.getNewAcceleration();
     }
 
     /**
      * Checks for collisions with the given wall number
-     * @param {Number} wallNumber 
+     * @param {any} wall 
      * The given wall number
+     * @param {Number} multiplier
+     * Position multiplier
      * @returns {boolean}
      * True if the ball will collide with the wall
      */
-    collidesWithWall(wallNumber) {
-        newPosition = this.getNewPosition();
-        wall = walls[wallNumber]
+    collidesWithWall(wall, multiplier) {
+        var newPosition = this.getNewPosition(multiplier);
         
         return wall.intersectsSphere(new THREE.Sphere(newPosition, 4));
     }
 
     collidesWithBall(ball) {
-        
+        return false;
     }
 
-    findIntersectionWithWall(wallNumber) {
-        wall = walls[wallNumber]
-        intersenction;
-        pointCandidates = [];
-
-        for(wall in walls) {
-            //Adding 4 center positions to the list
-            pointCandidates.push(this.getCenterPosition().clone());
+    collidesWithFloor() {
+        if(this.getPosition().y > -20) {
+            return true;
         }
+        else {
+            //TODO Check if ball is above one of the holes
+            if(this.getPosition().y - this.radius >= floorY) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
 
-        //Making the points point to the 4 sphere highest/lowest x/z points
-        pointCandidates[0].x += getRadius();
-        pointCandidates[1].z += getRadius();
-        pointCandidates[2].x -= getRadius();
-        pointCandidates[3].z -= getRadius();
+    findIntersectionWithWall(wall, newPosition) {
+        var intersection;
+        var fraction;
+        var normal;
 
         if(Math.abs(wall.min.x) == Math.abs(wall.max.x)) {
             //Dealing with an X-stretched wall
-            minZ = Math.min(Math.abs(wall.min.z), Math.abs(wall.max.z));
+            var minZ = Math.min(Math.abs(wall.min.z), Math.abs(wall.max.z));
 
             if(wall.max.z < 0) {
                 minZ = -minZ;
             }
 
-            multiplier = velocity.z / (minZ - this.getCenterPosition().z);
-            intersection = new THREE.Vector3(velocity.x / multiplier, this.getCenterPosition().y, minZ);
+            fraction = newPosition.z / (minZ - this.getPosition().z);
+            intersection = new THREE.Vector3(newPosition.x / fraction, this.getPosition().y, minZ);
+            normal = new THREE.Vector3(0, 0, (Math.abs(minZ) / minZ));
         }
         else {
             //Dealing with a Z-stretched wall
-            minX = Math.min(Math.abs(wall.min.x), Math.abs(wall.max.x));
+            var minX = Math.min(Math.abs(wall.min.x), Math.abs(wall.max.x));
 
             if(wall.max.x < 0) {
                 minX = -minX;
             }
 
-            multiplier = velocity.x / (minX - this.getCenterPosition().x);
-            intersection = new THREE.Vector3(minX, this.getCenterPosition().y, velocity.z / multiplier);
+            fraction = newPosition.x / (minX - this.getPosition().x);
+            intersection = new THREE.Vector3(minX, this.getPosition().y, newPosition.z / fraction);
+            normal = new THREE.Vector3((Math.abs(minX) / minX), 0, 0);
         }
 
-        return intersection;
+        console.log("Normal: ", normal);
+
+        return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
     }
 
-    processWallCollision(wallNumber) {
+    processWallCollision(intersection, normal, fraction) {
+        this.velocity.applyAxisAngle(normal, Math.PI / 2);
 
+        //Placing the ball adjacent to the intersection position
+        this.setPosition(intersection.add(normal.multiplyScalar(this.radius)));
+
+        //Given the ball's new position due to the collision and its remaining travelling, calculate other collisions
+        this.updateBall(fraction);
     }
 
     processBallCollision(ball) {
@@ -256,6 +310,8 @@ function createTableTop(obj, x, y, z) {
     var tableMaterial = new THREE.MeshBasicMaterial({color: 0x337900});
     var tableGeometry = new THREE.BoxGeometry(284, 16, 142);
     var table = new THREE.Mesh(tableGeometry, tableMaterial);
+
+    floorY = y + 8;
 
     table.position.set(x, y, z);
     
@@ -289,12 +345,12 @@ function addLateralInnerWall(obj, x, y, z) {
 
     wall.position.set(x, y, z);
 
-    walls.push(wall);
-
     wallGeometry.computeBoundingBox();
 
     box = wallGeometry.boundingBox.clone().applyMatrix4(wall.matrixWorld);
     box.translate(wall.position);
+
+    walls.push(box);
 
     obj.add(wall);
 }
@@ -316,12 +372,12 @@ function addBaseInnerWall(obj, x, y, z) {
 
     wall.position.set(x, y, z);
 
-    walls.push(wall);
-
     wallGeometry.computeBoundingBox();
 
     box = wallGeometry.boundingBox.clone().applyMatrix4(wall.matrixWorld);
     box.translate(wall.position);
+
+    walls.push(box);
 
     obj.add(wall);
 }
@@ -368,7 +424,8 @@ function createStructure() {
     addBaseInnerWall(table, 147, 4, 0);
     addBaseOuterWall(table, 157, 4, 0);
 
-    for (var i = 0; i < 15; i++) {
+    //RAF
+    for (var i = 0; i < 1; i++) {
         balls.push(new Ball(holeRadius-0.5));
     }
     // create pool cues
@@ -379,7 +436,7 @@ function createStructure() {
     poolCueList.push(new PoolCue(-54, 8, -141, 0.5, 0));
     poolCueList.push(new PoolCue(54, 8, -141, 0.5, 0));
 
-
+    balls[0].velocity.add(new THREE.Vector3(10, 0, 0));
 
     scene.add(table);
 }
@@ -468,12 +525,17 @@ function updatePositionsAndCheckCollisions() {
 }
 
 function animate() {
-
+    delta = clock.getDelta();
 
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
             keyActions[key]();
         }
+    }
+
+    //Dealing with collisions for all balls
+    for(i in balls) {
+        balls[i].updateBall();
     }
 }
