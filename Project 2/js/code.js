@@ -5,18 +5,17 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var balls = [];
+var poolCueList= [];
 
-class MotionEquation {
-    velocity = new THREE.Vector3(0, 0, 0);
-    acceleration = new THREE.Vector3(0, -9.8, 0);
-    ball;
 
-    constructor(ball) {
-        this.ball = ball;
-    }
-}
+//Lists of objects and objects for collision detection
+var balls = [];
+var walls = [];
+var tableTop;
 
 class Ball {
+    velocity = new THREE.Vector3();
+    acceleration = new THREE.Vector3(0, -9.8, 0)
     constructor(radius) {
         this.radius = radius;
 
@@ -118,11 +117,96 @@ class Ball {
     getMesh() {
         return this.mesh;
     }
+
+    /**
+     * Returns a vector representing the position in which the ball will be if it moves foward, given its
+     * current velocity and acceleration
+     */
+    getNewPosition() {
+        newPosition = new THREE.Vector3();
+
+        newPosition.x = this.getCenterPosition(0) + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+        newPosition.y = this.getCenterPosition(1) + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+        newPosition.z = this.getCenterPosition(2) + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+
+        return newPosition;
+    }
+
+    getNewVelocity() {
+        newVelocity = new THREE.Vector3();
+
+        newVelocity.x = velocity.x + delta * this.acceleration.x;
+        newVelocity.y = velocity.y + delta * this.acceleration.y;
+        newVelocity.z = velocity.z + delta * this.acceleration.z;
+
+        return newVelocity;
+    }
+
+    getNewAcceleration() {
+        newAcceleration = new THREE.Vector3();
+
+        //Simulating friction
+        if(this.velocity.x > 0) {
+            newAcceleration.x = 0.2;
+        }
+        if(this.velocity.z > 0) {
+            newAcceleration.z = 0.2;
+        }
+
+        return newAcceleration;
+    }
+
+    getCenterPosition() {
+
+    }
+
+    getCenterPosition(coordinate) {
+
+    }
+
+    setCenterPosition(coordinate, value) {
+
+    }
+
+    collidesWithWall(wallNumber) {
+
+    }
+
+    collidesWithBall(ball) {
+
+    }
+
+    findIntersectionWithWall(wallNumber) {
+
+    }
+
+    processWallCollision(wallNumber) {
+
+    }
+
+    processBallCollision(ball) {
+
+    }
 }
 
 function distanceBetween(x1, y1, x2, y2) {
     return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
+
+class PoolCue{
+    constructor(x, y, z, a, b){
+        var poolCueMaterial = new THREE.MeshBasicMaterial({color: 0xff66b2});
+        var poolCueGeometry = new THREE.CylinderGeometry(1, 3, 100, 30);
+        var poolCue = new THREE.Mesh(poolCueGeometry, poolCueMaterial);
+
+        poolCue.rotation.x += a * Math.PI;
+        poolCue.rotation.z += b * Math.PI;
+        poolCue.position.set(x, y, z);
+        scene.add(poolCue);
+
+    }
+}
+
 
 function createTableTop(obj, x, y, z) {
     var tableMaterial = new THREE.MeshBasicMaterial({color: 0x337900});
@@ -161,6 +245,8 @@ function addLateralInnerWall(obj, x, y, z) {
 
     wall.position.set(x, y, z);
 
+    walls.push(wall);
+
     obj.add(wall);
 }
 
@@ -180,6 +266,8 @@ function addBaseInnerWall(obj, x, y, z) {
     var wall = new THREE.Mesh(wallGeometry, wallMaterial);
 
     wall.position.set(x, y, z);
+
+    walls.push(wall);
 
     obj.add(wall);
 }
@@ -229,6 +317,15 @@ function createStructure() {
     for (var i = 0; i < 15; i++) {
         balls.push(new Ball(holeRadius-0.5));
     }
+    // create pool cues
+    poolCueList.push(new PoolCue(222, 8, 0, 0, 0.5 ));
+    poolCueList.push(new PoolCue(-222, 8, 0, 0, -0.5 ));
+    poolCueList.push(new PoolCue(-54, 8, 141, -0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, 141, -0.5, 0));
+    poolCueList.push(new PoolCue(-54, 8, -141, 0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, -141, 0.5, 0));
+
+
 
     scene.add(table);
 }
