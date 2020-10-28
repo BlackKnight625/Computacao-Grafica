@@ -1,11 +1,10 @@
-const THREE = require("./three");
-
 var renderer, scene, camera;
 var clock = new THREE.Clock();
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
+var balls = [];
 
 class MotionEquation {
     velocity = new THREE.Vector3(0, 0, 0);
@@ -18,9 +17,111 @@ class MotionEquation {
 }
 
 class Ball {
-    constructor() {
-        this.motionEq = new MotionEquation();
+    constructor(radius) {
+        this.radius = radius;
+
+        var color = [];
+        var red = Math.floor(Math.random() * 256);
+        var green = Math.floor(Math.random() * 256);
+        var blue = Math.floor(Math.random() * 256);
+
+        color.push(red);
+        color.push(green);
+        color.push(blue);
+
+        color = this.goodColor(color);
+
+        var ballColor = new THREE.Color(color[0]/255, color[1]/255, color[2]/255);
+
+        var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
+        var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
+        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+
+        scene.add(mesh);
+
+        var x = this.getRndInteger(-130, 130);
+        var y = 8+radius/2;
+        var z = this.getRndInteger(-58, 58);
+
+        var pos = this.goodPosition(x, y, z);
+
+        mesh.position.set(pos[0], pos[1], pos[2]);
+
+        this.pos = pos;
+
+        this.mesh = mesh;
+
+        // needs to check if new random ball isnt where another ball is
     }
+
+    getPosition() {
+        return this.pos;
+    }
+
+    goodPosition(x, y, z) {
+        var pos = [];
+        pos.push(x);
+        pos.push(y);
+        pos.push(z);
+
+        var ball_pos;
+        for (var i = 0; i < balls.length; i++) {
+            ball_pos = balls[i].getPosition();
+            if (distanceBetween(x, z, ball_pos[0], ball_pos[2]) < this.radius) {
+                pos[0] = this.getRndInteger(-130, 130);
+                pos[2] = this.getRndInteger(-58, 58);
+                return this.goodPosition(pos[0], pos[1], pos[2]);
+            }
+        }
+
+        return pos;
+    }
+
+    goodColor(color) {
+        var tableTopColor = [51, 121, 0];
+        var holeColor = [0, 0, 0];
+        var wallColor = [112, 51, 0];
+
+        var dif = 0;
+        for (var i = 0; i < 3; i++) {
+            dif += Math.abs(color[i] - tableTopColor[i]);
+        }
+        if (dif <= 40) {
+            color[0] = 255;
+            color[1] += 40; 
+        }
+
+        dif = 0;
+        for (var i = 0; i < 3; i++) {
+            dif += Math.abs(color[i] - holeColor[i]);
+        }
+        if (dif <= 40) {
+            color[0] = 255;
+            color[2] = 100;
+        }
+
+        dif = 0;
+        for (var i = 0; i < 3; i++) {
+            dif += Math.abs(color[i] - wallColor[i]);
+        }
+        if (dif <= 40) {
+            color[2] = 255;
+        }
+
+        return color;
+    }
+
+    getRndInteger(min, max) {
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    getMesh() {
+        return this.mesh;
+    }
+}
+
+function distanceBetween(x1, y1, x2, y2) {
+    return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
 
 function createTableTop(obj, x, y, z) {
@@ -115,7 +216,7 @@ function createStructure() {
     addTableLeg(table, 106.5, -48, -35.5);
     addTableLeg(table, 106.5, -48, 35.5);
 
-    // create green padding walls
+    // create padding walls
     addLateralInnerWall(table, 0, 4, 76);
     addLateralOuterWall(table, 0, 4, 86);
     addLateralInnerWall(table, 0, 4, -76);
@@ -124,6 +225,10 @@ function createStructure() {
     addBaseOuterWall(table, -157, 4, 0);
     addBaseInnerWall(table, 147, 4, 0);
     addBaseOuterWall(table, 157, 4, 0);
+
+    for (var i = 0; i < 15; i++) {
+        balls.push(new Ball(holeRadius-0.5));
+    }
 
     scene.add(table);
 }
