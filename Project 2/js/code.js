@@ -58,6 +58,7 @@ class Ball {
 
         var mesh = new THREE.Object3D();
         mesh.add(ball);
+		mesh.add(new THREE.AxesHelper(6));
 
         scene.add(mesh);
 
@@ -247,11 +248,27 @@ class Ball {
             //Intersection not needed. Processing is done here
             this.acceleration.set(this.acceleration.x, -50, this.acceleration.z);
         }
+        else {
+            if(this.getPosition().y > 0) {
+                //Balls that are above y 0 cannot have y velocity
+                this.velocity.y = 0;
+            }
+        }
+
+        var newPosition = this.getNewPosition(multiplier);
+        var previousToNew = newPosition.clone().sub(this.getPosition());
 
         //Updating vectors
-        this.setPosition(this.getNewPosition(multiplier));
+        this.setPosition(newPosition);
         this.velocity = this.getNewVelocity();
         this.acceleration = this.getNewAcceleration();
+
+        if(previousToNew.length() > 0.01) {
+            //The object moved enough to perform a rotation
+            var rotationAxis = new THREE.Vector3(0, 1, 0).cross(previousToNew).normalize();
+
+            this.mesh.rotateOnWorldAxis(rotationAxis, previousToNew.length() / (2 * Math.PI * this.radius));
+        }
 
         if(this.velocity.length() < 0.01) {
             //Velocity too low. Set it to 0
@@ -762,15 +779,9 @@ function createStructure() {
     var ballRadius = holeRadius - 0.5;
 
     // add 15 balls
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 45; i++) {
         balls.push(new Ball(ballRadius));
     }
-    
-    balls[0].velocity.set(0, 0, 0);
-
-    balls[0].setPosition(new THREE.Vector3(141 - ballRadius, 8+ballRadius, 0));
-
-    balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
     // create pool cues
     poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
@@ -848,7 +859,7 @@ function init() {
     camera.position.z = 200;
     camera.lookAt(scene.position);
 
-    var axes = new THREE.AxisHelper(20);
+    var axes = new THREE.AxesHelper(20);
     scene.add(axes);
 
     document.body.appendChild(renderer.domElement);
