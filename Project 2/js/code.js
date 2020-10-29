@@ -642,7 +642,7 @@ class PoolCue{
     }
 
     select() {
-        this.mesh.children[0].material.color = new THREE.Color(0x000000);
+        this.mesh.children[0].material.color = new THREE.Color(0x990099);
     }
 
     shoot() {
