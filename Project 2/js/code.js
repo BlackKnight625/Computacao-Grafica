@@ -5,11 +5,14 @@ var keyActions = {};
 var pressedKeyActions = {};
 
 var balls = [];
-var whiteBalls = [];
+var holes = [];
 var delta = 0;
 var poolCueList= [];
 var selectedCue = undefined;
 var initiatedShot = false;
+var goalBall; //Ball to be followed by the mobile camera
+var holeRadius = 4;
+var ballDefaultY = 8;
 
 var floorY;
 
@@ -29,6 +32,7 @@ class Ball {
     velocity = new THREE.Vector3(0, 0, 0);
     acceleration = new THREE.Vector3(0, 0, 0);
     defaultAcceleration = new THREE.Vector3(0, 0, 0);
+    insideHole = null;
 
     constructor(radius) {
         this.radius = radius;
@@ -56,7 +60,7 @@ class Ball {
 
         // sets the ball in a random position
         var x = this.getRndInteger(-130, 130);
-        var y = 8+radius;
+        var y = ballDefaultY + radius;
         var z = this.getRndInteger(-58, 58);
 
         mesh.position.set(x, y, z)
@@ -71,6 +75,14 @@ class Ball {
         this.velocity.add(new THREE.Vector3(x, 0, z));
 
         this.mesh = mesh;
+    }
+
+    setColor(color) {
+        this.mesh.material.color = color;
+    }
+
+    isOnTopOfTable() {
+        return this.getPosition().y >= ballDefaultY + this.radius;
     }
 
     getPosition() {
@@ -183,7 +195,10 @@ class Ball {
 
     getNewAcceleration() {
         if(this.velocity.length() > 0.01) {
-            return this.velocity.clone().normalize().multiplyScalar(-10);
+            var newAcceleration = this.velocity.clone().normalize().multiplyScalar(-10);
+            newAcceleration.set(newAcceleration.x, this.acceleration.y, newAcceleration.z);
+
+            return newAcceleration;
         }
         else {
             return this.defaultAcceleration.clone();
@@ -196,7 +211,7 @@ class Ball {
             if(this.collidesWithWall(wall, multiplier)) {
                 var intersection = this.findIntersectionWithWall(wall, this.getNewPosition(multiplier));
 
-                this.processWallCollision(intersection.intersection, intersection.normal, intersection.fraction);
+                this.processWallCollision(intersection["intersection"], intersection["normal"], intersection["fractionLeft"], multiplier);
                 return;
             }
         }
@@ -205,13 +220,29 @@ class Ball {
             var ball = balls[i];
             if(ball != this) {
                 if(this.collidesWithBall(ball)) {
-                    //TODO
+                    var intersection = this.findIntersectionWithBall(ball, this.getNewPosition(multiplier));
+
+                    this.processBallCollision(ball, intersection["intersection"], intersection["position"], intersection["fractionLeft"], multiplier);
+                    return;
                 }
             }
         }
 
-        if(this.collidesWithFloor()) {
-            //TODO
+        if(this.insideHole != null) {
+            var newPositon = this.getNewPosition(multiplier);
+            //The ball is inside a hole. Make sure it doesn't get out of it
+            if(distanceBetween(this.insideHole.x, this.insideHole.z, newPositon.x, newPositon.z) > holeRadius) {
+                this.velocity.set(-this.velocity.x, this.velocity.y, -this.velocity.z);
+            }
+
+            if(newPositon.y < 0) {
+                //Preventing the ball from further bouncing
+                this.insideHole = null;
+            }
+        }
+        else if(this.collidesWithHole()) {
+            //Intersection not needed. Processing is done here
+            this.acceleration.set(this.acceleration.x, -50, this.acceleration.z);
         }
 
         //Updating vectors
@@ -244,20 +275,18 @@ class Ball {
         var newPosition = this.getNewPosition(multiplier);
         var distance = newPosition.distanceTo(ball.getPosition());
 
-        return distance <= (this.radius + ball.radius);
+        return distance < (this.radius + ball.radius);
     }
 
-    collidesWithFloor() {
-        if(this.getPosition().y > -20) {
-            return true;
-        }
-        else {
-            //TODO Check if ball is above one of the holes
-            if(this.getPosition().y - this.radius >= floorY) {
+    collidesWithHole() {
+        var newPosition = this.getNewPosition();
+
+        for(i in holes) {
+            var hole = holes[i];
+
+            if(distanceBetween(hole.x, hole.z, newPosition.x, newPosition.z) <= holeRadius && newPosition.y > 0) {
+                this.insideHole = hole;
                 return true;
-            }
-            else {
-                return false;
             }
         }
     }
@@ -299,8 +328,6 @@ class Ball {
             fraction = (minX - this.getPosition().x - sign * this.radius) / (newPosition.x - this.getPosition().x);
             intersection = new THREE.Vector3(minX, this.getPosition().y, this.getPosition().z + (newPosition.z - this.getPosition().z) * fraction);
             normal = new THREE.Vector3((Math.abs(minX) / minX), 0, 0);
-
-            //console.log("Values: ", minX - sign * this.radius, this.getPosition().x, newPosition.x, this.getPosition().x);
         }
 
         normal.normalize();
@@ -309,12 +336,42 @@ class Ball {
     }
 
     findIntersectionWithBall(ball, newPosition) {
-        var direction = newPosition.clone().sub(this.getPosition()).normalize();
+        var oldToNew = newPosition.clone().sub(this.getPosition());
+        var currentDistance = 1;
+        var centerDistance = newPosition.distanceTo(ball.getPosition());
+        var increment = 0.5;
+        var position = newPosition.clone();
 
-        return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
+        //Going back and forth to place the position near the colliding position
+        for(var i = 0; i < 20; i++) {
+            centerDistance = position.distanceTo(ball.getPosition());
+
+            if(centerDistance > this.radius + ball.radius) {
+                //Position is far from the ball. Get him closer
+                currentDistance += increment;
+            }
+            else {
+                //Position is inside the ball. Get him farther
+                currentDistance -= increment;
+            }
+
+            increment = increment / 2;
+
+            //Moving the position back or forth
+            position = this.getPosition().clone().add(oldToNew.clone().multiplyScalar(currentDistance));
+        }
+
+        //At this point, the position is pretty close to the other ball, almost adjacent
+        var positionToBall = ball.getPosition().clone().sub(position).normalize().multiplyScalar(this.radius);
+        var intersection = position.clone().add(positionToBall);
+
+        //Fraction of the trajectory that was lost due to the collision
+        var fraction = 1.0 - currentDistance;
+
+        return {"intersection": intersection, "position": position, "fractionLeft": fraction};
     }
 
-    processWallCollision(intersection, normal, fraction) {
+    processWallCollision(intersection, normal, fraction, multiplier) {
         //Reflecting the velocity
         if(Math.abs(normal.x) > 0) {
             this.velocity.set(-this.velocity.x, this.velocity.y, this.velocity.z);
@@ -331,11 +388,44 @@ class Ball {
         this.setPosition(intersection.add(normal.multiplyScalar(-this.radius)));
 
         //Given the ball's new position due to the collision and its remaining travelling, calculate other collisions
-        this.updateBall(fraction);
+        this.updateBall(fraction * multiplier);
     }
 
-    processBallCollision(ball) {
+    processBallCollision(ball, intersection, position, fraction, multiplier) {
+        var positionToBall = ball.getPosition().clone().sub(position); //x2 - x1
+        var ballToPosition = position.clone().sub(ball.getPosition()); //x1 - x2
+        
+        //Calculating resulting velocity for this ball due to the elastic collision
+        // <v1 - v2, x1 - x2>
+        var dotProduct = ballToPosition.dot(this.velocity.clone().sub(ball.velocity));
 
+        // ||x1 - x2|| ^2
+        var lengthSqr = ballToPosition.lengthSq();
+
+        var aux = ballToPosition.clone().multiplyScalar(dotProduct / lengthSqr);
+
+        var newThisVelocity = this.velocity.clone().sub(aux);
+
+        //Calculating resulting velocity for the other ball due to the elastic collision
+        // <v1 - v2, x1 - x2>
+        var dotProduct = positionToBall.dot(ball.velocity.clone().sub(this.velocity));
+
+        // ||x1 - x2|| ^2
+        var lengthSqr = positionToBall.lengthSq();
+
+        var aux = positionToBall.clone().multiplyScalar(dotProduct / lengthSqr);
+
+        this.velocity = newThisVelocity;
+        ball.velocity.sub(aux);
+
+        this.setPosition(position);
+
+        if(this.collidesWithBall(ball)) {
+            //This ball is consistently colliding with the other ball
+            return;
+        }
+
+        this.updateBall(fraction * multiplier);
     }
 }
 
@@ -413,6 +503,14 @@ class Advance extends State {
 
         if (this.traveled >= 70) {
             this.poolCue.setState(new BackToOrigin(this.poolCue));
+
+            var ball = this.poolCue.ball;
+            if (ball != null) {
+                ball.velocity = new THREE.Vector3(100, 0, 0);
+                balls.push(ball);
+                console.log(ball);
+                this.poolCue.ball = null;
+            }
         }
     }
 }
@@ -476,6 +574,10 @@ class PoolCue{
         this.defaultPosition = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y, this.mesh.position.z);
     }
 
+    setBall(ball) {
+        this.ball = ball;
+    }
+
     setState(state) {
         this.state = state;
     }
@@ -518,10 +620,12 @@ function createTableTop(obj, x, y, z) {
 
 function addTableHole(obj, x, y, z) {
     var holeMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-    var holeGeometry = new THREE.CylinderGeometry(4, 4, 1, 30);
+    var holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, 1, 30);
     var hole = new THREE.Mesh(holeGeometry, holeMaterial);
 
     hole.position.set(x, y, z);
+
+    holes.push(new THREE.Vector3(x, y, z));
 
     obj.add(hole);
 }
@@ -593,8 +697,6 @@ function addBaseOuterWall(obj, x, y, z) {
 function createStructure() {
     var table = new THREE.Object3D();
 
-    var holeRadius = 4;
-
     // crates the table top
     createTableTop(table, 0, 0, 0);
 
@@ -628,6 +730,12 @@ function createStructure() {
     for (var i = 0; i < 15; i++) {
         balls.push(new Ball(ballRadius));
     }
+    
+    balls[0].velocity.set(0, 0, 60);
+
+    balls[1].velocity.add(new THREE.Vector3(-80, 0, 0));
+
+    balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
     // create pool cues
     poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
@@ -638,12 +746,39 @@ function createStructure() {
     poolCueList.push(new PoolCue(54, 17, -141 + (50+23.5), 0.5, 0));
 
     // add white balls
-    whiteBalls.push(new WhiteBall(-142 + ballRadius, 8+ballRadius, 0, ballRadius));
-    whiteBalls.push(new WhiteBall(142 - ballRadius, 8+ballRadius, 0, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, -71 + ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
+    var ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(142 - ballRadius, 8+ballRadius, 0));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[0].setBall(ball);
+    console.log(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-142 + ballRadius, 8+ballRadius, 0));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[1].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-54, 8+ballRadius, 71 - ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[2].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(54, 8+ballRadius, 71 - ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[3].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-54, 8+ballRadius, -71 + ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[4].setBall(new WhiteBall(ball));
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(54, 8+ballRadius, -71 + ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[5].setBall(ball);
+
+    //set goalBall which will be followed by the mobile camera
+    goalBall = balls[0]; 
 
     scene.add(table);
 }
@@ -807,7 +942,7 @@ function updatePositionsAndCheckCollisions() {
 function animate() {
     delta = clock.getDelta();
 
-    
+
     /*If the user leaves the screen, the next delta will be large. 
     As such, this will make sure it's never too high so that the balls
     don't run from the table*/
@@ -830,14 +965,19 @@ function animate() {
         }
     }
 
+    //ball followed by the mobile cam
+    var ball_position;
+
     //Dealing with collisions for all balls
     for(i in balls) {
         balls[i].updateBall();
     }
 
+    ball_position = goalBall.getPosition();
+
     if (mobileCam) {
-        //camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
-        //camera.lookAt(ball_pos);
+        camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
+        camera.lookAt(ball_position);
     }
 
     if (initiatedShot) {
