@@ -6,10 +6,13 @@ var pressedKeyActions = {};
 
 var balls = [];
 var whiteBalls = [];
+var holes = [];
 var delta = 0;
 var poolCueList= [];
 var selectedCue = undefined;
 var goalBall; //Ball to be followed by the mobile camera
+var holeRadius = 4;
+var ballDefaultY = 8;
 
 var floorY;
 
@@ -29,6 +32,7 @@ class Ball {
     velocity = new THREE.Vector3(0, 0, 0);
     acceleration = new THREE.Vector3(0, 0, 0);
     defaultAcceleration = new THREE.Vector3(0, 0, 0);
+    insideHole = null;
 
     constructor(radius) {
         this.radius = radius;
@@ -56,7 +60,7 @@ class Ball {
 
         // sets the ball in a random position
         var x = this.getRndInteger(-130, 130);
-        var y = 8+radius;
+        var y = ballDefaultY + radius;
         var z = this.getRndInteger(-58, 58);
 
         mesh.position.set(x, y, z)
@@ -71,6 +75,10 @@ class Ball {
         this.velocity.add(new THREE.Vector3(x, 0, z));
 
         this.mesh = mesh;
+    }
+
+    isOnTopOfTable() {
+        return this.getPosition().y >= ballDefaultY + this.radius;
     }
 
     getPosition() {
@@ -183,7 +191,10 @@ class Ball {
 
     getNewAcceleration() {
         if(this.velocity.length() > 0.01) {
-            return this.velocity.clone().normalize().multiplyScalar(-10);
+            var newAcceleration = this.velocity.clone().normalize().multiplyScalar(-10);
+            newAcceleration.set(newAcceleration.x, this.acceleration.y, newAcceleration.z);
+
+            return newAcceleration;
         }
         else {
             return this.defaultAcceleration.clone();
@@ -205,11 +216,7 @@ class Ball {
             var ball = balls[i];
             if(ball != this) {
                 if(this.collidesWithBall(ball)) {
-                    console.log("Collision!", balls.indexOf(this), balls.indexOf(ball));
-
                     var intersection = this.findIntersectionWithBall(ball, this.getNewPosition(multiplier));
-
-                    console.log("Intersecting at: ", intersection);
 
                     this.processBallCollision(ball, intersection["intersection"], intersection["position"], intersection["fractionLeft"], multiplier);
                     return;
@@ -217,8 +224,21 @@ class Ball {
             }
         }
 
-        if(this.collidesWithFloor()) {
-            //TODO
+        if(this.insideHole != null) {
+            var newPositon = this.getNewPosition(multiplier);
+            //The ball is inside a hole. Make sure it doesn't get out of it
+            if(distanceBetween(this.insideHole.x, this.insideHole.z, newPositon.x, newPositon.z) > holeRadius) {
+                this.velocity.set(-this.velocity.x, this.velocity.y, -this.velocity.z);
+            }
+
+            if(newPositon.y < 0) {
+                //Preventing the ball from further bouncing
+                this.insideHole = null;
+            }
+        }
+        else if(this.collidesWithHole()) {
+            //Intersection not needed. Processing is done here
+            this.acceleration.set(this.acceleration.x, -50, this.acceleration.z);
         }
 
         //Updating vectors
@@ -254,17 +274,15 @@ class Ball {
         return distance < (this.radius + ball.radius);
     }
 
-    collidesWithFloor() {
-        if(this.getPosition().y > -20) {
-            return true;
-        }
-        else {
-            //TODO Check if ball is above one of the holes
-            if(this.getPosition().y - this.radius >= floorY) {
+    collidesWithHole() {
+        var newPosition = this.getNewPosition();
+
+        for(i in holes) {
+            var hole = holes[i];
+
+            if(distanceBetween(hole.x, hole.z, newPosition.x, newPosition.z) <= holeRadius && newPosition.y > 0) {
+                this.insideHole = hole;
                 return true;
-            }
-            else {
-                return false;
             }
         }
     }
@@ -382,11 +400,7 @@ class Ball {
 
         var aux = ballToPosition.clone().multiplyScalar(dotProduct / lengthSqr);
 
-        console.log("Previous velocity: ", balls[0] == this, this.velocity);
-
         var newThisVelocity = this.velocity.clone().sub(aux);
-
-        console.log("New velocity: ", balls[0] == this, newThisVelocity);
 
         //Calculating resulting velocity for the other ball due to the elastic collision
         // <v1 - v2, x1 - x2>
@@ -397,12 +411,8 @@ class Ball {
 
         var aux = positionToBall.clone().multiplyScalar(dotProduct / lengthSqr);
 
-        console.log("Previous other velocity: ", ball.velocity);
-
         this.velocity = newThisVelocity;
         ball.velocity.sub(aux);
-
-        console.log("New other velocity: ", ball.velocity);
 
         this.setPosition(position);
 
@@ -499,10 +509,12 @@ function createTableTop(obj, x, y, z) {
 
 function addTableHole(obj, x, y, z) {
     var holeMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-    var holeGeometry = new THREE.CylinderGeometry(4, 4, 1, 30);
+    var holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, 1, 30);
     var hole = new THREE.Mesh(holeGeometry, holeMaterial);
 
     hole.position.set(x, y, z);
+
+    holes.push(new THREE.Vector3(x, y, z));
 
     obj.add(hole);
 }
@@ -574,8 +586,6 @@ function addBaseOuterWall(obj, x, y, z) {
 function createStructure() {
     var table = new THREE.Object3D();
 
-    var holeRadius = 4;
-
     // crates the table top
     createTableTop(table, 0, 0, 0);
 
@@ -610,7 +620,7 @@ function createStructure() {
         balls.push(new Ball(ballRadius));
     }
     
-    balls[0].velocity.add(new THREE.Vector3(300, 0, 60));
+    balls[0].velocity.set(0, 0, 60);
 
     balls[1].velocity.add(new THREE.Vector3(-80, 0, 0));
 
@@ -633,7 +643,7 @@ function createStructure() {
     whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
 
     //set goalBall which will be followed by the mobile camera
-    goalBall= balls[0]; 
+    goalBall = balls[0]; 
 
     scene.add(table);
 }
@@ -803,12 +813,12 @@ function animate() {
     //Dealing with collisions for all balls
     for(i in balls) {
         balls[i].updateBall();
-        if (balls[i] == goalBall){
-            ball_position= balls[i].getPosition();
-        }
     }
 
+    ball_position = goalBall.getPosition();
+
     if (mobileCam) {
+        console.log("Pos on cam: ", ball_position);
         camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
         camera.lookAt(ball_position);
     }
