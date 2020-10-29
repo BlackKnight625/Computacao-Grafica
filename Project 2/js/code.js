@@ -568,6 +568,9 @@ class Advance extends State {
                 }
                 console.log(this.poolCue);
                 this.poolCue.ball = null;
+
+                //set goalBall which will be followed by the mobile camera
+                goalBall= ball;
             }
         }
     }
@@ -829,9 +832,6 @@ function createStructure() {
     ball.setColor(new THREE.Color(0xFFFFFF));
     poolCueList[5].setBall(ball);
 
-    //set goalBall which will be followed by the mobile camera
-    goalBall = balls[0]; 
-
     scene.add(table);
 }
 
@@ -841,7 +841,6 @@ function createStructure() {
 function render() {
     'use strict';
 
-    updatePositionsAndCheckCollisions();
     animate();
 
     requestAnimationFrame(render);
@@ -989,9 +988,6 @@ function addKeyActions() {
     }
 }
 
-function updatePositionsAndCheckCollisions() {
-
-}
 
 function animate() {
     delta = clock.getDelta();
@@ -1027,11 +1023,20 @@ function animate() {
         balls[i].updateBall();
     }
 
-    ball_position = goalBall.getPosition();
+    if (goalBall!= undefined){
+        ball_position = goalBall.getPosition();
+    }
+    
 
     if (mobileCam) {
-        camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
-        camera.lookAt(ball_position);
+        if (ball_position == undefined){
+            camera.position.set(0,10,0);
+        }
+        else{
+            camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
+            camera.lookAt(ball_position);
+        }
+        
     }
 
     if (initiatedShot) {
