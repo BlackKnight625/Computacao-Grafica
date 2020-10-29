@@ -779,7 +779,7 @@ function createStructure() {
     var ballRadius = holeRadius - 0.5;
 
     // add 15 balls
-    for (var i = 0; i < 45; i++) {
+    for (var i = 0; i < 15; i++) {
         balls.push(new Ball(ballRadius));
     }
 
