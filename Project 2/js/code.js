@@ -187,6 +187,9 @@ class Ball {
         return newPosition;
     }
 
+    /**
+     * Gets a new velocity which is an updated velocity given the current acceleration
+     */
     getNewVelocity() {
         var newVelocity = new THREE.Vector3();
 
