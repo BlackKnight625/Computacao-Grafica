@@ -187,6 +187,9 @@ class Ball {
         return newPosition;
     }
 
+    /**
+     * Gets a new velocity which is an updated velocity given the current acceleration
+     */
     getNewVelocity() {
         var newVelocity = new THREE.Vector3();
 
@@ -526,6 +529,12 @@ class Advance extends State {
 
             var ball = this.poolCue.ball;
             if (ball != null) {
+
+                for (var i = 0; i < balls.length; i++) {
+                    if (balls[i] != ball && ball.collidesWithBall(balls[i])) {
+                        return;
+                    }
+                }
 
                 switch(this.poolCue.place) {
                     case 0:
@@ -924,6 +933,8 @@ function onKeyUp(e) {
 function selectCue(i) {
     if (selectedCue == i) {
         return;
+    } else if (initiatedShot) {
+        return;
     } else if (selectedCue != undefined) {
         poolCueList[selectedCue].unselect();
     }
@@ -932,7 +943,9 @@ function selectCue(i) {
 }
 
 function shootBall() {
-    initiatedShot = true;
+    if (selectedCue != undefined) {
+        initiatedShot = true;
+    }
 }
 
 function rotateCue(theta) {
@@ -973,9 +986,6 @@ function addKeyActions() {
 
     pressedKeyActions[51] = function () {
         camera = perspCam;
-        var ball_pos = balls[0].getPosition();
-        camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
-        camera.lookAt(ball_pos);
         mobileCam = true;
     }
 }
@@ -1022,7 +1032,7 @@ function animate() {
 
     if (mobileCam) {
         if (ball_position == undefined){
-            camera.position.set(0,10,0);
+            camera.position.set(250, 200, 250);
         }
         else{
             camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
