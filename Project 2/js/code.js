@@ -5,11 +5,11 @@ var keyActions = {};
 var pressedKeyActions = {};
 
 var balls = [];
-var whiteBalls = [];
 var holes = [];
 var delta = 0;
 var poolCueList= [];
 var selectedCue = undefined;
+var initiatedShot = false;
 var goalBall; //Ball to be followed by the mobile camera
 var holeRadius = 4;
 var ballDefaultY = 8;
@@ -54,8 +54,11 @@ class Ball {
 
         var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
         var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
-        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
-        mesh.add(new THREE.AxisHelper(6));
+        var ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+        var mesh = new Object3D();
+        mesh.add(ball);
+		mesh.add(new THREE.AxisHelper(6));
 
         scene.add(mesh);
 
@@ -76,6 +79,10 @@ class Ball {
         this.velocity.add(new THREE.Vector3(x, 0, z));
 
         this.mesh = mesh;
+    }
+
+    setColor(color) {
+        this.mesh.material.color = color;
     }
 
     isOnTopOfTable() {
@@ -454,24 +461,109 @@ class Ball {
     }
 }
 
-class WhiteBall extends Ball {
-    constructor(x, y, z, radius) {
-        super();
-        
-        var ballMaterial = new THREE.MeshBasicMaterial({color: 0xFFFFFF});
-        var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
-        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+function distanceBetween(x1, y1, x2, y2) {
+    return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+}
 
-        scene.add(mesh);
+class State {
+    constructor(poolCue) {
+        this.poolCue = poolCue;
+        this.traveled = 0;
+    }
 
-        mesh.position.set(x, y, z);
-
-        this.mesh = mesh;
+    updatePosition() {
+        switch(this.poolCue.place) {
+            case 0:
+                this.poolCue.mesh.translateX(this.velocity.x*delta*-1);
+                break;
+            case 1:
+                this.poolCue.mesh.translateX(this.velocity.x*delta);
+                break;
+            case 2:
+                this.poolCue.mesh.translateZ(this.velocity.x*delta*-1);
+                break;
+            case 3:
+                this.poolCue.mesh.translateZ(this.velocity.x*delta);
+                break;
+            default:
+                break;
+        }
     }
 }
 
-function distanceBetween(x1, y1, x2, y2) {
-    return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+class Retract extends State {
+    constructor(poolCue) {
+        super(poolCue);
+        this.velocity = new THREE.Vector3(-80, 0, 0);
+    }
+
+    updatePosition() {
+        super.updatePosition();
+        this.traveled += this.velocity.x*delta;
+
+        if (this.traveled <= -50) {
+            this.poolCue.setState(new Advance(this.poolCue));
+        }
+    }
+}
+
+class Advance extends State {
+    constructor(poolCue) {
+        super(poolCue);
+        this.velocity = new THREE.Vector3(160, 0, 0);
+    }
+
+    updatePosition() {
+        super.updatePosition();
+        this.traveled += this.velocity.x*delta;
+
+        if (this.traveled >= 70) {
+            this.poolCue.setState(new BackToOrigin(this.poolCue));
+
+            var ball = this.poolCue.ball;
+            if (ball != null) {
+
+                switch(this.poolCue.place) {
+                    case 0:
+
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    default:
+                        break;
+                }
+
+
+                ball.velocity = new THREE.Vector3(100, 0, 0);
+                balls.push(ball);
+                console.log(this.poolCue);
+                this.poolCue.ball = null;
+            }
+        }
+    }
+}
+
+class BackToOrigin extends State {
+    constructor(poolCue) {
+        super(poolCue);
+        this.velocity = new THREE.Vector3(-50, 0, 0);
+    }
+
+    updatePosition() {
+        super.updatePosition();
+        this.traveled += this.velocity.x*delta;
+
+        if (this.traveled <= -20) {
+            this.poolCue.setState(new Retract(this.poolCue));
+            initiatedShot = false;
+            this.poolCue.mesh.position.x = this.poolCue.defaultPosition.x;
+            this.poolCue.mesh.position.z = this.poolCue.defaultPosition.z;
+        }
+    }
 }
 
 class PoolCue{
@@ -486,14 +578,18 @@ class PoolCue{
         if (a == 0) { // one of the two edged cues
             if (x > 0) {
                 poolCue.position.set(50+23.5, 0, 0);
+                this.place = 0; // right cue
             } else {
                 poolCue.position.set(-50-23.5, 0, 0);
+                this.place = 1; // left cue
             }
         } else {
             if (z > 0) {
                 poolCue.position.set(0, 0, 50+23.5);
+                this.place = 2; // further cues
             } else {
                 poolCue.position.set(0, 0, -50-23.5);
+                this.place = 3; // close cues
             }
         }
 
@@ -506,10 +602,28 @@ class PoolCue{
         this.mesh = mesh;
         this.theta = 0;
         this.limit = Math.PI / 3.0;
+        this.state = new Retract(this);
+        this.defaultPosition = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y, this.mesh.position.z);
+    }
+
+    setBall(ball) {
+        this.ball = ball;
+    }
+
+    setState(state) {
+        this.state = state;
+    }
+
+    unselect() {
+        this.mesh.children[0].material.color = new THREE.Color(0xff66b2);
+    }
+
+    select() {
+        this.mesh.children[0].material.color = new THREE.Color(0x000000);
     }
 
     shoot() {
-        console.log("bam");
+        this.state.updatePosition();
     }
 
     rotate(theta) {
@@ -664,12 +778,36 @@ function createStructure() {
     poolCueList.push(new PoolCue(54, 17, -141 + (50+23.5), 0.5, 0));
 
     // add white balls
-    whiteBalls.push(new WhiteBall(-142 + ballRadius, 8+ballRadius, 0, ballRadius));
-    whiteBalls.push(new WhiteBall(142 - ballRadius, 8+ballRadius, 0, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, -71 + ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
+    var ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(142 - ballRadius, 8+ballRadius, 0));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[0].setBall(ball);
+    console.log(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-142 + ballRadius, 8+ballRadius, 0));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[1].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-54, 8+ballRadius, 71 - ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[2].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(54, 8+ballRadius, 71 - ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[3].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(-54, 8+ballRadius, -71 + ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[4].setBall(ball);
+
+    ball = new Ball(ballRadius);
+    ball.setPosition(new THREE.Vector3(54, 8+ballRadius, -71 + ballRadius));
+    ball.setColor(new THREE.Color(0xFFFFFF));
+    poolCueList[5].setBall(ball);
 
     //set goalBall which will be followed by the mobile camera
     goalBall = balls[0]; 
@@ -719,10 +857,27 @@ function init() {
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    //window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize);
 
     //Adding key actions
     addKeyActions();
+}
+
+function onResize() {
+    'use strict';
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        perspCam.aspect = window.innerWidth / window.innerHeight;
+        perspCam.updateProjectionMatrix();
+
+        ortCam.left = window.innerWidth / - 4;
+        ortCam.right = window.innerWidth / 4;
+        ortCam.top = window.innerHeight / 4;
+        ortCam.bottom = window.innerHeight / - 4;
+        ortCam.updateProjectionMatrix();
+    }
 }
 
 /**
@@ -754,18 +909,24 @@ function onKeyUp(e) {
 }
 
 function selectCue(i) {
+    if (selectedCue == i) {
+        return;
+    } else if (selectedCue != undefined) {
+        poolCueList[selectedCue].unselect();
+    }
     selectedCue = i;
+    poolCueList[selectedCue].select();
 }
 
 function shootBall() {
-    if (selectedCue != undefined) {
-        poolCueList[selectedCue].shoot();
-    }
+    initiatedShot = true;
 }
 
 function rotateCue(theta) {
-    if (selectedCue != undefined) {
-        poolCueList[selectedCue].rotate(theta);
+    if (initiatedShot) {
+        return;
+    } else if (selectedCue != undefined) {
+        poolCueList[selectedCue].rotate(delta*theta);
     }
 }
 
@@ -780,8 +941,8 @@ function addKeyActions() {
 
     pressedKeyActions[32] = function () {shootBall();}; // space
 
-    keyActions[39] = function () {rotateCue(0.02);}; // ->
-    keyActions[37] = function () {rotateCue(-0.02);}; // <-
+    keyActions[39] = function () {rotateCue(0.2);}; // ->
+    keyActions[37] = function () {rotateCue(-0.2);}; // <-
 
     pressedKeyActions[49] = function () {
         mobileCam = false;
@@ -851,4 +1012,7 @@ function animate() {
         camera.lookAt(ball_position);
     }
 
+    if (initiatedShot) {
+        poolCueList[selectedCue].shoot();
+    }
 }
