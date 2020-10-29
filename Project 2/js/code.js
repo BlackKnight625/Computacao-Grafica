@@ -54,7 +54,10 @@ class Ball {
 
         var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
         var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
-        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+        var ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+        var mesh = new Object3D();
+        mesh.add(ball);
 
         scene.add(mesh);
 
@@ -445,22 +448,6 @@ class Ball {
     }
 }
 
-class WhiteBall extends Ball {
-    constructor(x, y, z, radius) {
-        super();
-        
-        var ballMaterial = new THREE.MeshBasicMaterial({color: 0xFFFFFF});
-        var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
-        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
-
-        scene.add(mesh);
-
-        mesh.position.set(x, y, z);
-
-        this.mesh = mesh;
-    }
-}
-
 function distanceBetween(x1, y1, x2, y2) {
     return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
@@ -522,9 +509,25 @@ class Advance extends State {
 
             var ball = this.poolCue.ball;
             if (ball != null) {
+
+                switch(this.poolCue.place) {
+                    case 0:
+
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    default:
+                        break;
+                }
+
+
                 ball.velocity = new THREE.Vector3(100, 0, 0);
                 balls.push(ball);
-                console.log(ball);
+                console.log(this.poolCue);
                 this.poolCue.ball = null;
             }
         }
@@ -786,7 +789,7 @@ function createStructure() {
     ball = new Ball(ballRadius);
     ball.setPosition(new THREE.Vector3(-54, 8+ballRadius, -71 + ballRadius));
     ball.setColor(new THREE.Color(0xFFFFFF));
-    poolCueList[4].setBall(new WhiteBall(ball));
+    poolCueList[4].setBall(ball);
 
     ball = new Ball(ballRadius);
     ball.setPosition(new THREE.Vector3(54, 8+ballRadius, -71 + ballRadius));
