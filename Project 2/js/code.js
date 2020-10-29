@@ -818,7 +818,6 @@ function animate() {
     ball_position = goalBall.getPosition();
 
     if (mobileCam) {
-        console.log("Pos on cam: ", ball_position);
         camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
         camera.lookAt(ball_position);
     }
