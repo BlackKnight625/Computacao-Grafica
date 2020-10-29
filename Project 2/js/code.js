@@ -5,7 +5,9 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var balls = [];
+var whiteBalls = [];
 var poolCueList= [];
+var selectedCue = undefined;
 
 
 //Lists of objects and objects for collision detection
@@ -49,8 +51,6 @@ class Ball {
         this.pos = pos;
 
         this.mesh = mesh;
-
-        // needs to check if new random ball isnt where another ball is
     }
 
     getPosition() {
@@ -80,6 +80,7 @@ class Ball {
         var tableTopColor = [51, 121, 0];
         var holeColor = [0, 0, 0];
         var wallColor = [112, 51, 0];
+        var white = [255, 255, 255];
 
         var dif = 0;
         for (var i = 0; i < 3; i++) {
@@ -105,6 +106,15 @@ class Ball {
         }
         if (dif <= 40) {
             color[2] = 255;
+        }
+    
+        dif = 0;
+        for (var i = 0; i < 3; i++) {
+            dif += Math.abs(color[i] - white[i]);
+        }
+        if (dif <= 40) {
+            color[1] = 50;
+            color[2] = 200;
         }
 
         return color;
@@ -189,6 +199,22 @@ class Ball {
     }
 }
 
+class WhiteBall extends Ball {
+    constructor(x, y, z, radius) {
+        super();
+        
+        var ballMaterial = new THREE.MeshBasicMaterial({color: 0xFFFFFF});
+        var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
+        var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+
+        scene.add(mesh);
+
+        mesh.position.set(x, y, z);
+
+        this.mesh = mesh;
+    }
+}
+
 function distanceBetween(x1, y1, x2, y2) {
     return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
@@ -201,9 +227,44 @@ class PoolCue{
 
         poolCue.rotation.x += a * Math.PI;
         poolCue.rotation.z += b * Math.PI;
-        poolCue.position.set(x, y, z);
-        scene.add(poolCue);
 
+        if (a == 0) { // one of the two edged cues
+            if (x > 0) {
+                poolCue.position.set(50, 0, 0);
+            } else {
+                poolCue.position.set(-50, 0, 0);
+            }
+        } else {
+            if (z > 0) {
+                poolCue.position.set(0, 0, 50);
+            } else {
+                poolCue.position.set(0, 0, -50);
+            }
+        }
+
+        var mesh = new THREE.Object3D();
+        mesh.add(poolCue);
+
+        scene.add(mesh);
+        mesh.position.set(x, y, z);
+
+        this.mesh = mesh;
+        this.theta = 0;
+        this.limit = Math.PI / 3.0;
+    }
+
+    shoot() {
+        console.log("bam");
+    }
+
+    rotate(theta) {
+        if (theta > 0 && this.theta > this.limit) {
+            return;
+        } else if (theta < 0 && this.theta < -1*this.limit) {
+            return;
+        }
+        this.mesh.rotation.y += (Math.PI * theta);
+        this.theta += (Math.PI * theta);
     }
 }
 
@@ -314,18 +375,28 @@ function createStructure() {
     addBaseInnerWall(table, 147, 4, 0);
     addBaseOuterWall(table, 157, 4, 0);
 
+    var ballRadius = holeRadius - 0.5;
+
+    // add 15 balls
     for (var i = 0; i < 15; i++) {
-        balls.push(new Ball(holeRadius-0.5));
+        balls.push(new Ball(ballRadius));
     }
+
     // create pool cues
-    poolCueList.push(new PoolCue(222, 8, 0, 0, 0.5 ));
-    poolCueList.push(new PoolCue(-222, 8, 0, 0, -0.5 ));
-    poolCueList.push(new PoolCue(-54, 8, 141, -0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, 141, -0.5, 0));
-    poolCueList.push(new PoolCue(-54, 8, -141, 0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, -141, 0.5, 0));
+    poolCueList.push(new PoolCue(222 - 50, 8, 0, 0, 0.5 ));
+    poolCueList.push(new PoolCue(-222 + 50, 8, 0, 0, -0.5 ));
+    poolCueList.push(new PoolCue(-54, 8, 141 - 50, -0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, 141 - 50, -0.5, 0));
+    poolCueList.push(new PoolCue(-54, 8, -141 + 50, 0.5, 0));
+    poolCueList.push(new PoolCue(54, 8, -141 + 50, 0.5, 0));
 
-
+    // add white balls
+    whiteBalls.push(new WhiteBall(-142 + ballRadius, 8+ballRadius, 0, ballRadius));
+    whiteBalls.push(new WhiteBall(142 - ballRadius, 8+ballRadius, 0, ballRadius));
+    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
+    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, -71 + ballRadius, ballRadius));
+    whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
+    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
 
     scene.add(table);
 }
@@ -370,8 +441,8 @@ function init() {
     render();
 
     //Adding event listeners
-    //window.addEventListener("keydown", onKeyDown);
-    //window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
     //window.addEventListener("resize", onResize);
 
     //Adding key actions
@@ -387,11 +458,9 @@ function onKeyDown(e) {
     'use strict';
     var key = e.keyCode;
 
-    pressedKeys[key] = true;
+    console.log(key);
 
-    if(key in pressedKeyActions) {
-        pressedKeyActions[key]();
-    }
+    pressedKeys[key] = true;
 }
 
 /**
@@ -401,12 +470,42 @@ function onKeyDown(e) {
  */
 function onKeyUp(e) {
     'use strict';
+    var key = e.keyCode;
 
-    delete pressedKeys[e.keyCode];
+    if (key in pressedKeys) {
+        delete pressedKeys[key];
+    }
+}
+
+function selectCue(i) {
+    selectedCue = i;
+}
+
+function shootBall() {
+    if (selectedCue != undefined) {
+        poolCueList[selectedCue].shoot();
+    }
+}
+
+function rotateCue(theta) {
+    if (selectedCue != undefined) {
+        poolCueList[selectedCue].rotate(theta);
+    }
 }
 
 function addKeyActions() {
+    // PoolCue Select Keys
+    pressedKeyActions[52] = function () {selectCue(0);}; //4
+    pressedKeyActions[53] = function () {selectCue(1);}; //5
+    pressedKeyActions[54] = function () {selectCue(2);}; //6
+    pressedKeyActions[55] = function () {selectCue(3);}; //7
+    pressedKeyActions[56] = function () {selectCue(4);}; //8
+    pressedKeyActions[57] = function () {selectCue(5);}; //9
 
+    pressedKeyActions[32] = function () {shootBall();}; // space
+
+    keyActions[39] = function () {rotateCue(0.02);}; // ->
+    keyActions[37] = function () {rotateCue(-0.02);}; // <-
 }
 
 function updatePositionsAndCheckCollisions() {
@@ -414,12 +513,19 @@ function updatePositionsAndCheckCollisions() {
 }
 
 function animate() {
-
-
+    
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
             keyActions[key]();
+        }
+    }
+
+    // calling every single action key
+    for (var key in pressedKeys) {
+        if (key in pressedKeyActions) {
+            pressedKeyActions[key]();
+            delete pressedKeys[key];
         }
     }
 }
