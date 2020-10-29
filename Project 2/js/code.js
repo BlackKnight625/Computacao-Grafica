@@ -530,6 +530,12 @@ class Advance extends State {
             var ball = this.poolCue.ball;
             if (ball != null) {
 
+                for (var i = 0; i < balls.length; i++) {
+                    if (balls[i] != ball && ball.collidesWithBall(balls[i])) {
+                        return;
+                    }
+                }
+
                 switch(this.poolCue.place) {
                     case 0:
                         var theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
@@ -565,6 +571,9 @@ class Advance extends State {
                 }
                 console.log(this.poolCue);
                 this.poolCue.ball = null;
+
+                //set goalBall which will be followed by the mobile camera
+                goalBall= ball;
             }
         }
     }
@@ -826,9 +835,6 @@ function createStructure() {
     ball.setColor(new THREE.Color(0xFFFFFF));
     poolCueList[5].setBall(ball);
 
-    //set goalBall which will be followed by the mobile camera
-    goalBall = balls[0]; 
-
     scene.add(table);
 }
 
@@ -838,7 +844,6 @@ function createStructure() {
 function render() {
     'use strict';
 
-    updatePositionsAndCheckCollisions();
     animate();
 
     requestAnimationFrame(render);
@@ -928,6 +933,8 @@ function onKeyUp(e) {
 function selectCue(i) {
     if (selectedCue == i) {
         return;
+    } else if (initiatedShot) {
+        return;
     } else if (selectedCue != undefined) {
         poolCueList[selectedCue].unselect();
     }
@@ -936,7 +943,9 @@ function selectCue(i) {
 }
 
 function shootBall() {
-    initiatedShot = true;
+    if (selectedCue != undefined) {
+        initiatedShot = true;
+    }
 }
 
 function rotateCue(theta) {
@@ -977,16 +986,10 @@ function addKeyActions() {
 
     pressedKeyActions[51] = function () {
         camera = perspCam;
-        var ball_pos = balls[0].getPosition();
-        camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
-        camera.lookAt(ball_pos);
         mobileCam = true;
     }
 }
 
-function updatePositionsAndCheckCollisions() {
-
-}
 
 function animate() {
     delta = clock.getDelta();
@@ -1022,11 +1025,20 @@ function animate() {
         balls[i].updateBall();
     }
 
-    ball_position = goalBall.getPosition();
+    if (goalBall!= undefined){
+        ball_position = goalBall.getPosition();
+    }
+    
 
     if (mobileCam) {
-        camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
-        camera.lookAt(ball_position);
+        if (ball_position == undefined){
+            camera.position.set(250, 200, 250);
+        }
+        else{
+            camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
+            camera.lookAt(ball_position);
+        }
+        
     }
 
     if (initiatedShot) {
