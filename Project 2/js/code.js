@@ -56,9 +56,9 @@ class Ball {
         var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
         var ball = new THREE.Mesh(ballGeometry, ballMaterial);
 
-        var mesh = new Object3D();
+        var mesh = new THREE.Object3D();
         mesh.add(ball);
-		mesh.add(new THREE.AxisHelper(6));
+		mesh.add(new THREE.AxesHelper(6));
 
         scene.add(mesh);
 
@@ -82,7 +82,7 @@ class Ball {
     }
 
     setColor(color) {
-        this.mesh.material.color = color;
+        this.mesh.children[0].material.color = color;
     }
 
     isOnTopOfTable() {
@@ -194,11 +194,6 @@ class Ball {
         newVelocity.y = this.velocity.y + delta * this.acceleration.y;
         newVelocity.z = this.velocity.z + delta * this.acceleration.z;
 
-        if(newVelocity.y > 0) {
-            //If the ball is going up, prevent it from reaching its dreams
-            newVelocity.y = 0;
-        }
-
         return newVelocity;
     }
 
@@ -253,6 +248,12 @@ class Ball {
             //Intersection not needed. Processing is done here
             this.acceleration.set(this.acceleration.x, -50, this.acceleration.z);
         }
+        else {
+            if(this.getPosition().y > 0) {
+                //Balls that are above y 0 cannot have y velocity
+                this.velocity.y = 0;
+            }
+        }
 
         var newPosition = this.getNewPosition(multiplier);
         var previousToNew = newPosition.clone().sub(this.getPosition());
@@ -263,7 +264,10 @@ class Ball {
         this.acceleration = this.getNewAcceleration();
 
         if(previousToNew.length() > 0.01) {
-            var rotationAxis = new THREE.Vector3(0, 1, 0).cross(previousToNew);
+            //The object moved enough to perform a rotation
+            var rotationAxis = new THREE.Vector3(0, 1, 0).cross(previousToNew).normalize();
+
+            this.mesh.rotateOnWorldAxis(rotationAxis, previousToNew.length() / (2 * Math.PI * this.radius));
         }
 
         if(this.velocity.length() < 0.01) {
@@ -759,15 +763,9 @@ function createStructure() {
     var ballRadius = holeRadius - 0.5;
 
     // add 15 balls
-    for (var i = 0; i < 30; i++) {
+    for (var i = 0; i < 45; i++) {
         balls.push(new Ball(ballRadius));
     }
-    
-    balls[0].velocity.set(0, 0, 60);
-
-    balls[1].velocity.add(new THREE.Vector3(-80, 0, 0));
-
-    balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
     // create pool cues
     poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
@@ -845,7 +843,7 @@ function init() {
     camera.position.z = 200;
     camera.lookAt(scene.position);
 
-    var axes = new THREE.AxisHelper(20);
+    var axes = new THREE.AxesHelper(20);
     scene.add(axes);
 
     document.body.appendChild(renderer.domElement);
