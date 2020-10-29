@@ -264,7 +264,23 @@ class Ball {
     collidesWithWall(wall, multiplier) {
         var newPosition = this.getNewPosition(multiplier);
         
-        return wall.intersectsSphere(new THREE.Sphere(newPosition, this.radius));
+        //If the ball collides with a wall, the 1 of 4 axis-alignes points will be inside the wall
+        var points = [];
+
+        points.push(newPosition.clone().add(new THREE.Vector3(this.radius, 0, 0)));
+        points.push(newPosition.clone().add(new THREE.Vector3(-this.radius, 0, 0)));
+        points.push(newPosition.clone().add(new THREE.Vector3(0, 0, this.radius)));
+        points.push(newPosition.clone().add(new THREE.Vector3(0, 0, -this.radius)));
+
+        //Checking if one of the points is inside the wall
+        for(i in points) {
+            var point = points[i];
+            if(point.x >= wall.min.x && point.z >= wall.min.z && point.x <= wall.max.x && point.z <= wall.max.z) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     collidesWithBall(ball, multiplier) {
