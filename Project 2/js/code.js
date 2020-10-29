@@ -180,7 +180,7 @@ class Ball {
             if(this.collidesWithWall(wall, multiplier)) {
                 var intersection = this.findIntersectionWithWall(wall, this.getNewPosition(multiplier));
 
-                this.processWallCollision(intersection.intersection, intersection.normal, intersection.fraction);
+                this.processWallCollision(intersection["intersection"], intersection["normal"], intersection["fractionLeft"], multiplier);
                 return;
             }
         }
@@ -189,7 +189,14 @@ class Ball {
             var ball = balls[i];
             if(ball != this) {
                 if(this.collidesWithBall(ball)) {
-                    //TODO
+                    console.log("Collision!", balls.indexOf(this), balls.indexOf(ball));
+
+                    var intersection = this.findIntersectionWithBall(ball, this.getNewPosition(multiplier));
+
+                    console.log("Intersecting at: ", intersection);
+
+                    this.processBallCollision(ball, intersection["intersection"], intersection["position"], intersection["fractionLeft"], multiplier);
+                    return;
                 }
             }
         }
@@ -228,7 +235,7 @@ class Ball {
         var newPosition = this.getNewPosition(multiplier);
         var distance = newPosition.distanceTo(ball.getPosition());
 
-        return distance <= (this.radius + ball.radius);
+        return distance < (this.radius + ball.radius);
     }
 
     collidesWithFloor() {
@@ -283,8 +290,6 @@ class Ball {
             fraction = (minX - this.getPosition().x - sign * this.radius) / (newPosition.x - this.getPosition().x);
             intersection = new THREE.Vector3(minX, this.getPosition().y, this.getPosition().z + (newPosition.z - this.getPosition().z) * fraction);
             normal = new THREE.Vector3((Math.abs(minX) / minX), 0, 0);
-
-            console.log("Values: ", minX - sign * this.radius, this.getPosition().x, newPosition.x, this.getPosition().x);
         }
 
         normal.normalize();
@@ -293,12 +298,42 @@ class Ball {
     }
 
     findIntersectionWithBall(ball, newPosition) {
-        var direction = newPosition.clone().sub(this.getPosition()).normalize();
+        var oldToNew = newPosition.clone().sub(this.getPosition());
+        var currentDistance = 1;
+        var centerDistance = newPosition.distanceTo(ball.getPosition());
+        var increment = 0.5;
+        var position = newPosition.clone();
 
-        return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
+        //Going back and forth to place the position near the colliding position
+        for(var i = 0; i < 20; i++) {
+            centerDistance = position.distanceTo(ball.getPosition());
+
+            if(centerDistance > this.radius + ball.radius) {
+                //Position is far from the ball. Get him closer
+                currentDistance += increment;
+            }
+            else {
+                //Position is inside the ball. Get him farther
+                currentDistance -= increment;
+            }
+
+            increment = increment / 2;
+
+            //Moving the position back or forth
+            position = this.getPosition().clone().add(oldToNew.clone().multiplyScalar(currentDistance));
+        }
+
+        //At this point, the position is pretty close to the other ball, almost adjacent
+        var positionToBall = ball.getPosition().clone().sub(position).normalize().multiplyScalar(this.radius);
+        var intersection = position.clone().add(positionToBall);
+
+        //Fraction of the trajectory that was lost due to the collision
+        var fraction = 1.0 - currentDistance;
+
+        return {"intersection": intersection, "position": position, "fractionLeft": fraction};
     }
 
-    processWallCollision(intersection, normal, fraction) {
+    processWallCollision(intersection, normal, fraction, multiplier) {
         //Reflecting the velocity
         if(Math.abs(normal.x) > 0) {
             this.velocity.set(-this.velocity.x, this.velocity.y, this.velocity.z);
@@ -315,11 +350,52 @@ class Ball {
         this.setPosition(intersection.add(normal.multiplyScalar(-this.radius)));
 
         //Given the ball's new position due to the collision and its remaining travelling, calculate other collisions
-        this.updateBall(fraction);
+        this.updateBall(fraction * multiplier);
     }
 
-    processBallCollision(ball) {
+    processBallCollision(ball, intersection, position, fraction, multiplier) {
+        var positionToBall = ball.getPosition().clone().sub(position); //x2 - x1
+        var ballToPosition = position.clone().sub(ball.getPosition()); //x1 - x2
+        
+        //Calculating resulting velocity for this ball due to the elastic collision
+        // <v1 - v2, x1 - x2>
+        var dotProduct = ballToPosition.dot(this.velocity.clone().sub(ball.velocity));
 
+        // ||x1 - x2|| ^2
+        var lengthSqr = ballToPosition.lengthSq();
+
+        var aux = ballToPosition.clone().multiplyScalar(dotProduct / lengthSqr);
+
+        console.log("Previous velocity: ", balls[0] == this, this.velocity);
+
+        var newThisVelocity = this.velocity.clone().sub(aux);
+
+        console.log("New velocity: ", balls[0] == this, newThisVelocity);
+
+        //Calculating resulting velocity for the other ball due to the elastic collision
+        // <v1 - v2, x1 - x2>
+        var dotProduct = positionToBall.dot(ball.velocity.clone().sub(this.velocity));
+
+        // ||x1 - x2|| ^2
+        var lengthSqr = positionToBall.lengthSq();
+
+        var aux = positionToBall.clone().multiplyScalar(dotProduct / lengthSqr);
+
+        console.log("Previous other velocity: ", ball.velocity);
+
+        this.velocity = newThisVelocity;
+        ball.velocity.sub(aux);
+
+        console.log("New other velocity: ", ball.velocity);
+
+        this.setPosition(position);
+
+        if(this.collidesWithBall(ball)) {
+            //This ball is consistently colliding with the other ball
+            return;
+        }
+
+        this.updateBall(fraction * multiplier);
     }
 }
 
@@ -514,11 +590,15 @@ function createStructure() {
     var ballRadius = holeRadius - 0.5;
 
     // add 15 balls
-    //for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 15; i++) {
         balls.push(new Ball(ballRadius));
-    //}
+    }
     
-    balls[0].velocity.add(new THREE.Vector3(60, 0, 10));
+    balls[0].velocity.add(new THREE.Vector3(300, 0, 60));
+
+    balls[1].velocity.add(new THREE.Vector3(-80, 0, 0));
+
+    balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
     // create pool cues
     poolCueList.push(new PoolCue(222 - 50, 8, 0, 0, 0.5 ));
@@ -653,7 +733,7 @@ function updatePositionsAndCheckCollisions() {
 function animate() {
     delta = clock.getDelta();
 
-    
+
     /*If the user leaves the screen, the next delta will be large. 
     As such, this will make sure it's never too high so that the balls
     don't run from the table*/
