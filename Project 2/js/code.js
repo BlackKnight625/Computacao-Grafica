@@ -55,6 +55,7 @@ class Ball {
         var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
         var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
         var mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+        mesh.add(new THREE.AxisHelper(6));
 
         scene.add(mesh);
 
@@ -186,6 +187,11 @@ class Ball {
         newVelocity.y = this.velocity.y + delta * this.acceleration.y;
         newVelocity.z = this.velocity.z + delta * this.acceleration.z;
 
+        if(newVelocity.y > 0) {
+            //If the ball is going up, prevent it from reaching its dreams
+            newVelocity.y = 0;
+        }
+
         return newVelocity;
     }
 
@@ -241,10 +247,17 @@ class Ball {
             this.acceleration.set(this.acceleration.x, -50, this.acceleration.z);
         }
 
+        var newPosition = this.getNewPosition(multiplier);
+        var previousToNew = newPosition.clone().sub(this.getPosition());
+
         //Updating vectors
-        this.setPosition(this.getNewPosition(multiplier));
+        this.setPosition(newPosition);
         this.velocity = this.getNewVelocity();
         this.acceleration = this.getNewAcceleration();
+
+        if(previousToNew.length() > 0.01) {
+            var rotationAxis = new THREE.Vector3(0, 1, 0).cross(previousToNew);
+        }
 
         if(this.velocity.length() < 0.01) {
             //Velocity too low. Set it to 0
@@ -632,7 +645,7 @@ function createStructure() {
     var ballRadius = holeRadius - 0.5;
 
     // add 15 balls
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 30; i++) {
         balls.push(new Ball(ballRadius));
     }
     
