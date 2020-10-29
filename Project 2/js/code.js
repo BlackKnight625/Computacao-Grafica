@@ -12,6 +12,13 @@ var selectedCue = undefined;
 
 var floorY;
 
+var ortCam = new THREE.OrthographicCamera(window.innerWidth / - 4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / - 4,
+    -200, 500);
+
+var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+var mobileCam = false;
+
 //Lists of objects and objects for collision detection
 var balls = [];
 var walls = []; //Contains the wall's bounding boxes
@@ -45,7 +52,7 @@ class Ball {
         scene.add(mesh);
 
         var x = this.getRndInteger(-130, 130);
-        var y = 8+radius/2;
+        var y = 8+radius;
         var z = this.getRndInteger(-58, 58);
 
         mesh.position.set(x, y, z)
@@ -74,7 +81,7 @@ class Ball {
         var ball_pos;
         for (var i = 0; i < balls.length; i++) {
             ball_pos = balls[i].getPosition();
-            if (distanceBetween(x, z, ball_pos.x, ball_pos.z) < this.radius) {
+            if (distanceBetween(x, z, ball_pos.x, ball_pos.z) < 2*this.radius) {
                 pos[0] = this.getRndInteger(-130, 130);
                 pos[2] = this.getRndInteger(-58, 58);
                 return this.goodPosition(pos[0], pos[1], pos[2]);
@@ -152,7 +159,7 @@ class Ball {
         newPosition.y = this.getPosition().y + time * this.velocity.y + 0.5 * time * time * this.acceleration.y;
         newPosition.z = this.getPosition().z + time * this.velocity.z + 0.5 * time * time * this.acceleration.z;
 
-        console.log("GetNewPosition", multiplier, time, this.getPosition(), newPosition);
+        //console.log("GetNewPosition", multiplier, time, this.getPosition(), newPosition);
 
         return newPosition;
     }
@@ -205,9 +212,9 @@ class Ball {
             //TODO
         }
 
-        console.log("Previous position: ", this.getPosition());
+        //console.log("Previous position: ", this.getPosition());
         this.setPosition(this.getNewPosition(multiplier));
-        console.log("New position: ", this.getPosition());
+        //console.log("New position: ", this.getPosition());
 
         this.velocity = this.getNewVelocity();
         this.acceleration = this.getNewAcceleration();
@@ -277,7 +284,7 @@ class Ball {
             normal = new THREE.Vector3((Math.abs(minX) / minX), 0, 0);
         }
 
-        console.log("Normal: ", normal);
+        //console.log("Normal: ", normal);
 
         return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
     }
@@ -328,15 +335,15 @@ class PoolCue{
 
         if (a == 0) { // one of the two edged cues
             if (x > 0) {
-                poolCue.position.set(50, 0, 0);
+                poolCue.position.set(50+23.5, 0, 0);
             } else {
-                poolCue.position.set(-50, 0, 0);
+                poolCue.position.set(-50-23.5, 0, 0);
             }
         } else {
             if (z > 0) {
-                poolCue.position.set(0, 0, 50);
+                poolCue.position.set(0, 0, 50+23.5);
             } else {
-                poolCue.position.set(0, 0, -50);
+                poolCue.position.set(0, 0, -50-23.5);
             }
         }
 
@@ -495,12 +502,12 @@ function createStructure() {
     balls[balls.length-1].velocity.add(new THREE.Vector3(10, 0, 0));
 
     // create pool cues
-    poolCueList.push(new PoolCue(222 - 50, 8, 0, 0, 0.5 ));
-    poolCueList.push(new PoolCue(-222 + 50, 8, 0, 0, -0.5 ));
-    poolCueList.push(new PoolCue(-54, 8, 141 - 50, -0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, 141 - 50, -0.5, 0));
-    poolCueList.push(new PoolCue(-54, 8, -141 + 50, 0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, -141 + 50, 0.5, 0));
+    poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
+    poolCueList.push(new PoolCue(-212 + (50+23.5), 17, 0, 0, -0.5 ));
+    poolCueList.push(new PoolCue(-54, 17, 141 - (50+23.5), -0.5, 0));
+    poolCueList.push(new PoolCue(54, 17, 141 - (50+23.5), -0.5, 0));
+    poolCueList.push(new PoolCue(-54, 17, -141 + (50+23.5), 0.5, 0));
+    poolCueList.push(new PoolCue(54, 17, -141 + (50+23.5), 0.5, 0));
 
     // add white balls
     whiteBalls.push(new WhiteBall(-142 + ballRadius, 8+ballRadius, 0, ballRadius));
@@ -508,7 +515,7 @@ function createStructure() {
     whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
     whiteBalls.push(new WhiteBall(-54, 8+ballRadius, -71 + ballRadius, ballRadius));
     whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
+    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
 
     scene.add(table);
 }
@@ -537,7 +544,7 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = perspCam
     camera.position.x = 200;
     camera.position.y = 200;
     camera.position.z = 200;
@@ -618,6 +625,28 @@ function addKeyActions() {
 
     keyActions[39] = function () {rotateCue(0.02);}; // ->
     keyActions[37] = function () {rotateCue(-0.02);}; // <-
+
+    pressedKeyActions[49] = function () {
+        mobileCam = false;
+        camera = ortCam;
+        camera.position.set(0, 200, 0);
+        camera.lookAt(scene.position);
+    }
+
+    pressedKeyActions[50] = function () {
+        mobileCam = false;
+        camera = perspCam;
+        camera.position.set(250, 200, 250);
+        camera.lookAt(scene.position);
+    }
+
+    pressedKeyActions[51] = function () {
+        camera = perspCam;
+        var ball_pos = balls[0].getPosition();
+        camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
+        camera.lookAt(ball_pos);
+        mobileCam = true;
+    }
 }
 
 function updatePositionsAndCheckCollisions() {
@@ -644,5 +673,10 @@ function animate() {
     //Dealing with collisions for all balls
     for(i in balls) {
         balls[i].updateBall();
+    }
+
+    if (mobileCam) {
+        //camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
+        //camera.lookAt(ball_pos);
     }
 }
