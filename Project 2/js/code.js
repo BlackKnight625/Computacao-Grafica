@@ -27,11 +27,12 @@ var tableTop;
 class Ball {
     velocity = new THREE.Vector3(0, 0, 0);
     acceleration = new THREE.Vector3(0, 0, 0);
-
+    defaultAcceleration = new THREE.Vector3(0, 0, 0);
 
     constructor(radius) {
         this.radius = radius;
 
+        // creates a random color
         var color = [];
         var red = Math.floor(Math.random() * 256);
         var green = Math.floor(Math.random() * 256);
@@ -43,6 +44,7 @@ class Ball {
 
         color = this.goodColor(color);
 
+        // creates the mesh with respective material and geometry
         var ballColor = new THREE.Color(color[0]/255, color[1]/255, color[2]/255);
 
         var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
@@ -51,6 +53,7 @@ class Ball {
 
         scene.add(mesh);
 
+        // sets the ball in a random position
         var x = this.getRndInteger(-130, 130);
         var y = 8+radius;
         var z = this.getRndInteger(-58, 58);
@@ -60,6 +63,11 @@ class Ball {
         var pos = this.goodPosition(x, y, z);
 
         mesh.position.set(pos[0], pos[1], pos[2]);
+
+        // sets some random velocity 
+        x = this.getRndInteger(-100, 100);
+        z = this.getRndInteger(-100, 100);
+        this.velocity.add(new THREE.Vector3(x, 0, z));
 
         this.mesh = mesh;
     }
@@ -159,8 +167,6 @@ class Ball {
         newPosition.y = this.getPosition().y + time * this.velocity.y + 0.5 * time * time * this.acceleration.y;
         newPosition.z = this.getPosition().z + time * this.velocity.z + 0.5 * time * time * this.acceleration.z;
 
-        //console.log("GetNewPosition", multiplier, time, this.getPosition(), newPosition);
-
         return newPosition;
     }
 
@@ -175,17 +181,12 @@ class Ball {
     }
 
     getNewAcceleration() {
-        var newAcceleration = new THREE.Vector3();
-
-        //Simulating friction
-        if(this.velocity.x > 0) {
-            newAcceleration.x = 0.2;
+        if(this.velocity.length() > 0.01) {
+            return this.velocity.clone().normalize().multiplyScalar(-10);
         }
-        if(this.velocity.z > 0) {
-            newAcceleration.z = 0.2;
+        else {
+            return this.defaultAcceleration.clone();
         }
-
-        return newAcceleration;
     }
 
     updateBall(multiplier = 1) {
@@ -212,12 +213,15 @@ class Ball {
             //TODO
         }
 
-        //console.log("Previous position: ", this.getPosition());
+        //Updating vectors
         this.setPosition(this.getNewPosition(multiplier));
-        //console.log("New position: ", this.getPosition());
-
         this.velocity = this.getNewVelocity();
         this.acceleration = this.getNewAcceleration();
+
+        if(this.velocity.length() < 0.01) {
+            //Velocity too low. Set it to 0
+            this.velocity = new THREE.Vector3(0, 0, 0);
+        }
     }
 
     /**
@@ -232,11 +236,14 @@ class Ball {
     collidesWithWall(wall, multiplier) {
         var newPosition = this.getNewPosition(multiplier);
         
-        return wall.intersectsSphere(new THREE.Sphere(newPosition, 4));
+        return wall.intersectsSphere(new THREE.Sphere(newPosition, this.radius));
     }
 
-    collidesWithBall(ball) {
-        return false;
+    collidesWithBall(ball, multiplier) {
+        var newPosition = this.getNewPosition(multiplier);
+        var distance = newPosition.distanceTo(ball.getPosition());
+
+        return distance <= (this.radius + ball.radius);
     }
 
     collidesWithFloor() {
@@ -258,6 +265,7 @@ class Ball {
         var intersection;
         var fraction;
         var normal;
+        var sign;
 
         if(Math.abs(wall.min.x) == Math.abs(wall.max.x)) {
             //Dealing with an X-stretched wall
@@ -265,10 +273,14 @@ class Ball {
 
             if(wall.max.z < 0) {
                 minZ = -minZ;
+                sign = -1;
+            }
+            else {
+                sign = 1;
             }
 
-            fraction = newPosition.z / (minZ - this.getPosition().z);
-            intersection = new THREE.Vector3(newPosition.x / fraction, this.getPosition().y, minZ);
+            fraction = (minZ - this.getPosition().z - sign * this.radius) / (newPosition.z - this.getPosition().z);
+            intersection = new THREE.Vector3(this.getPosition().x + (newPosition.x - this.getPosition().x) * fraction, this.getPosition().y, minZ);
             normal = new THREE.Vector3(0, 0, (Math.abs(minZ) / minZ));
         }
         else {
@@ -277,23 +289,45 @@ class Ball {
 
             if(wall.max.x < 0) {
                 minX = -minX;
+                sign = -1;
+            }
+            else {
+                sign = 1;
             }
 
-            fraction = newPosition.x / (minX - this.getPosition().x);
-            intersection = new THREE.Vector3(minX, this.getPosition().y, newPosition.z / fraction);
+            fraction = (minX - this.getPosition().x - sign * this.radius) / (newPosition.x - this.getPosition().x);
+            intersection = new THREE.Vector3(minX, this.getPosition().y, this.getPosition().z + (newPosition.z - this.getPosition().z) * fraction);
             normal = new THREE.Vector3((Math.abs(minX) / minX), 0, 0);
+
+            console.log("Values: ", minX - sign * this.radius, this.getPosition().x, newPosition.x, this.getPosition().x);
         }
 
-        //console.log("Normal: ", normal);
+        normal.normalize();
+
+        return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
+    }
+
+    findIntersectionWithBall(ball, newPosition) {
+        var direction = newPosition.clone().sub(this.getPosition()).normalize();
 
         return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
     }
 
     processWallCollision(intersection, normal, fraction) {
-        this.velocity.applyAxisAngle(normal, Math.PI / 2);
+        //Reflecting the velocity
+        if(Math.abs(normal.x) > 0) {
+            this.velocity.set(-this.velocity.x, this.velocity.y, this.velocity.z);
+        }
+        else {
+            this.velocity.set(this.velocity.x, this.velocity.y, -this.velocity.z);
+        }
+
+        this.acceleration = this.getNewAcceleration();
+
+        console.log()
 
         //Placing the ball adjacent to the intersection position
-        this.setPosition(intersection.add(normal.multiplyScalar(this.radius)));
+        this.setPosition(intersection.add(normal.multiplyScalar(-this.radius)));
 
         //Given the ball's new position due to the collision and its remaining travelling, calculate other collisions
         this.updateBall(fraction);
@@ -498,8 +532,6 @@ function createStructure() {
     for (var i = 0; i < 15; i++) {
         balls.push(new Ball(ballRadius));
     }
-    balls.push(new Ball(holeRadius-0.5));
-    balls[balls.length-1].velocity.add(new THREE.Vector3(10, 0, 0));
 
     // create pool cues
     poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
@@ -654,7 +686,16 @@ function updatePositionsAndCheckCollisions() {
 }
 
 function animate() {
+    delta = clock.getDelta();
+
     
+    /*If the user leaves the screen, the next delta will be large. 
+    As such, this will make sure it's never too high so that the balls
+    don't run from the table*/
+    if(delta > 0.5) {
+        delta = 0.5;
+    }
+
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
