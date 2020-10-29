@@ -9,6 +9,7 @@ var whiteBalls = [];
 var delta = 0;
 var poolCueList= [];
 var selectedCue = undefined;
+var goalBall; //Ball to be followed by the mobile camera
 
 var floorY;
 
@@ -549,6 +550,9 @@ function createStructure() {
     whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
     whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
 
+    //set goalBall which will be followed by the mobile camera
+    goalBall= balls[0]; 
+
     scene.add(table);
 }
 
@@ -711,13 +715,20 @@ function animate() {
         }
     }
 
+    //ball followed by the mobile cam
+    var ball_position;
+
     //Dealing with collisions for all balls
     for(i in balls) {
         balls[i].updateBall();
+        if (balls[i] == goalBall){
+            ball_position= balls[i].getPosition();
+        }
     }
 
     if (mobileCam) {
-        //camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
-        //camera.lookAt(ball_pos);
+        camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
+        camera.lookAt(ball_position);
     }
+
 }
