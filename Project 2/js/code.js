@@ -56,7 +56,7 @@ class Ball {
         var ballGeometry = new THREE.SphereGeometry(radius, 30, 30);
         var ball = new THREE.Mesh(ballGeometry, ballMaterial);
 
-        var mesh = new Object3D();
+        var mesh = new THREE.Object3D();
         mesh.add(ball);
 
         scene.add(mesh);
@@ -81,7 +81,7 @@ class Ball {
     }
 
     setColor(color) {
-        this.mesh.material.color = color;
+        this.mesh.children[0].material.color = color;
     }
 
     isOnTopOfTable() {
@@ -512,21 +512,37 @@ class Advance extends State {
 
                 switch(this.poolCue.place) {
                     case 0:
-
+                        var theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
+                        var x = 100 * Math.sin(theta);
+                        var z = 100 * Math.cos(theta); 
+                        console.log(x, z);
+                        ball.velocity = new THREE.Vector3(x, 0, z);
+                        balls.push(ball);
                         break;
                     case 1:
+                        theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
+                        var x = 100 * Math.sin(theta);
+                        var z = -100 * Math.cos(theta); 
+                        ball.velocity = new THREE.Vector3(x, 0, z);
+                        balls.push(ball);
                         break;
                     case 2:
+                        theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
+                        var x = -100 * Math.cos(theta);
+                        var z = 100 * Math.sin(theta);
+                        ball.velocity = new THREE.Vector3(x, 0, z);
+                        balls.push(ball);
                         break;
                     case 3:
+                        theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
+                        var x = 100 * Math.cos(theta);
+                        var z = 100 * Math.sin(theta);
+                        ball.velocity = new THREE.Vector3(x, 0, z);
+                        balls.push(ball);
                         break;
                     default:
                         break;
                 }
-
-
-                ball.velocity = new THREE.Vector3(100, 0, 0);
-                balls.push(ball);
                 console.log(this.poolCue);
                 this.poolCue.ball = null;
             }
@@ -573,10 +589,10 @@ class PoolCue{
         } else {
             if (z > 0) {
                 poolCue.position.set(0, 0, 50+23.5);
-                this.place = 2; // further cues
+                this.place = 2; // closer cues
             } else {
                 poolCue.position.set(0, 0, -50-23.5);
-                this.place = 3; // close cues
+                this.place = 3; // further cues
             }
         }
 
@@ -750,9 +766,9 @@ function createStructure() {
         balls.push(new Ball(ballRadius));
     }
     
-    balls[0].velocity.set(0, 0, 60);
+    balls[0].velocity.set(0, 0, 0);
 
-    balls[1].velocity.add(new THREE.Vector3(-80, 0, 0));
+    balls[0].setPosition(new THREE.Vector3(141 - ballRadius, 8+ballRadius, 0));
 
     balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
