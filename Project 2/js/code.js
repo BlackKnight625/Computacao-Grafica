@@ -9,8 +9,16 @@ var whiteBalls = [];
 var delta = 0;
 var poolCueList= [];
 var selectedCue = undefined;
+var goalBall; //Ball to be followed by the mobile camera
 
 var floorY;
+
+var ortCam = new THREE.OrthographicCamera(window.innerWidth / - 4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / - 4,
+    -200, 500);
+
+var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+var mobileCam = false;
 
 //Lists of objects and objects for collision detection
 var balls = [];
@@ -25,6 +33,7 @@ class Ball {
     constructor(radius) {
         this.radius = radius;
 
+        // creates a random color
         var color = [];
         var red = Math.floor(Math.random() * 256);
         var green = Math.floor(Math.random() * 256);
@@ -36,6 +45,7 @@ class Ball {
 
         color = this.goodColor(color);
 
+        // creates the mesh with respective material and geometry
         var ballColor = new THREE.Color(color[0]/255, color[1]/255, color[2]/255);
 
         var ballMaterial = new THREE.MeshBasicMaterial({color: ballColor});
@@ -44,8 +54,9 @@ class Ball {
 
         scene.add(mesh);
 
+        // sets the ball in a random position
         var x = this.getRndInteger(-130, 130);
-        var y = 8+radius/2;
+        var y = 8+radius;
         var z = this.getRndInteger(-58, 58);
 
         mesh.position.set(x, y, z)
@@ -53,6 +64,11 @@ class Ball {
         var pos = this.goodPosition(x, y, z);
 
         mesh.position.set(pos[0], pos[1], pos[2]);
+
+        // sets some random velocity 
+        x = this.getRndInteger(-100, 100);
+        z = this.getRndInteger(-100, 100);
+        this.velocity.add(new THREE.Vector3(x, 0, z));
 
         this.mesh = mesh;
     }
@@ -74,7 +90,7 @@ class Ball {
         var ball_pos;
         for (var i = 0; i < balls.length; i++) {
             ball_pos = balls[i].getPosition();
-            if (distanceBetween(x, z, ball_pos.x, ball_pos.z) < this.radius) {
+            if (distanceBetween(x, z, ball_pos.x, ball_pos.z) < 2*this.radius) {
                 pos[0] = this.getRndInteger(-130, 130);
                 pos[2] = this.getRndInteger(-58, 58);
                 return this.goodPosition(pos[0], pos[1], pos[2]);
@@ -430,15 +446,15 @@ class PoolCue{
 
         if (a == 0) { // one of the two edged cues
             if (x > 0) {
-                poolCue.position.set(50, 0, 0);
+                poolCue.position.set(50+23.5, 0, 0);
             } else {
-                poolCue.position.set(-50, 0, 0);
+                poolCue.position.set(-50-23.5, 0, 0);
             }
         } else {
             if (z > 0) {
-                poolCue.position.set(0, 0, 50);
+                poolCue.position.set(0, 0, 50+23.5);
             } else {
-                poolCue.position.set(0, 0, -50);
+                poolCue.position.set(0, 0, -50-23.5);
             }
         }
 
@@ -601,12 +617,12 @@ function createStructure() {
     balls[2].velocity.add(new THREE.Vector3(60, 0, -30));
 
     // create pool cues
-    poolCueList.push(new PoolCue(222 - 50, 8, 0, 0, 0.5 ));
-    poolCueList.push(new PoolCue(-222 + 50, 8, 0, 0, -0.5 ));
-    poolCueList.push(new PoolCue(-54, 8, 141 - 50, -0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, 141 - 50, -0.5, 0));
-    poolCueList.push(new PoolCue(-54, 8, -141 + 50, 0.5, 0));
-    poolCueList.push(new PoolCue(54, 8, -141 + 50, 0.5, 0));
+    poolCueList.push(new PoolCue(212 - (50+23.5), 17, 0, 0, 0.5 ));
+    poolCueList.push(new PoolCue(-212 + (50+23.5), 17, 0, 0, -0.5 ));
+    poolCueList.push(new PoolCue(-54, 17, 141 - (50+23.5), -0.5, 0));
+    poolCueList.push(new PoolCue(54, 17, 141 - (50+23.5), -0.5, 0));
+    poolCueList.push(new PoolCue(-54, 17, -141 + (50+23.5), 0.5, 0));
+    poolCueList.push(new PoolCue(54, 17, -141 + (50+23.5), 0.5, 0));
 
     // add white balls
     whiteBalls.push(new WhiteBall(-142 + ballRadius, 8+ballRadius, 0, ballRadius));
@@ -614,7 +630,10 @@ function createStructure() {
     whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
     whiteBalls.push(new WhiteBall(-54, 8+ballRadius, -71 + ballRadius, ballRadius));
     whiteBalls.push(new WhiteBall(54, 8+ballRadius, 71 - ballRadius, ballRadius));
-    whiteBalls.push(new WhiteBall(54, 8+ballRadius, -71 + ballRadius, ballRadius));
+    whiteBalls.push(new WhiteBall(-54, 8+ballRadius, 71 - ballRadius, ballRadius));
+
+    //set goalBall which will be followed by the mobile camera
+    goalBall= balls[0]; 
 
     scene.add(table);
 }
@@ -643,7 +662,7 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = perspCam
     camera.position.x = 200;
     camera.position.y = 200;
     camera.position.z = 200;
@@ -724,6 +743,28 @@ function addKeyActions() {
 
     keyActions[39] = function () {rotateCue(0.02);}; // ->
     keyActions[37] = function () {rotateCue(-0.02);}; // <-
+
+    pressedKeyActions[49] = function () {
+        mobileCam = false;
+        camera = ortCam;
+        camera.position.set(0, 200, 0);
+        camera.lookAt(scene.position);
+    }
+
+    pressedKeyActions[50] = function () {
+        mobileCam = false;
+        camera = perspCam;
+        camera.position.set(250, 200, 250);
+        camera.lookAt(scene.position);
+    }
+
+    pressedKeyActions[51] = function () {
+        camera = perspCam;
+        var ball_pos = balls[0].getPosition();
+        camera.position.set(ball_pos.x - 10, ball_pos.y + 3, ball_pos.z - 10);
+        camera.lookAt(ball_pos);
+        mobileCam = true;
+    }
 }
 
 function updatePositionsAndCheckCollisions() {
@@ -756,8 +797,20 @@ function animate() {
         }
     }
 
+    //ball followed by the mobile cam
+    var ball_position;
+
     //Dealing with collisions for all balls
     for(i in balls) {
         balls[i].updateBall();
+        if (balls[i] == goalBall){
+            ball_position= balls[i].getPosition();
+        }
     }
+
+    if (mobileCam) {
+        camera.position.set(ball_position.x - 10, ball_position.y + 3, ball_position.z - 10);
+        camera.lookAt(ball_position);
+    }
+
 }
