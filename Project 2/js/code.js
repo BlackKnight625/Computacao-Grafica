@@ -527,6 +527,12 @@ class Advance extends State {
             var ball = this.poolCue.ball;
             if (ball != null) {
 
+                for (var i = 0; i < balls.length; i++) {
+                    if (balls[i] != ball && ball.collidesWithBall(balls[i])) {
+                        return;
+                    }
+                }
+
                 switch(this.poolCue.place) {
                     case 0:
                         var theta = (Math.PI/2) -this.poolCue.mesh.rotation.y;
@@ -924,6 +930,8 @@ function onKeyUp(e) {
 
 function selectCue(i) {
     if (selectedCue == i) {
+        return;
+    } else if (initiatedShot) {
         return;
     } else if (selectedCue != undefined) {
         poolCueList[selectedCue].unselect();
