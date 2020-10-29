@@ -275,7 +275,7 @@ class Ball {
         //Checking if one of the points is inside the wall
         for(i in points) {
             var point = points[i];
-            if(point.x >= wall.min.x && point.z >= wall.min.z && point.x <= wall.max.x && point.z <= wall.max.z) {
+            if(point.x > wall.min.x && point.z > wall.min.z && point.x < wall.max.x && point.z < wall.max.z) {
                 return true;
             }
         }
