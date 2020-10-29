@@ -293,11 +293,7 @@ class Ball {
     }
 
     findIntersectionWithBall(ball, newPosition) {
-        var centerToCenter = ball.getPosition().clone().sub(newPosition);
-        var centerToCenterTimeRadius = centerToCenter.clone().normalize().multiply(ball.radius);
-        var intersection = centerToCenter.sub(centerToCenterTimeRadius);
-
-        var centerToIntersection = intersection.clone().sub(newPosition);
+        var direction = newPosition.clone().sub(this.getPosition()).normalize();
 
         return {"intersection": intersection, "normal": normal, "fractionLeft": fraction};
     }
@@ -657,6 +653,7 @@ function updatePositionsAndCheckCollisions() {
 function animate() {
     delta = clock.getDelta();
 
+    
     /*If the user leaves the screen, the next delta will be large. 
     As such, this will make sure it's never too high so that the balls
     don't run from the table*/
