@@ -270,7 +270,7 @@ class Ball {
             //The object moved enough to perform a rotation
             var rotationAxis = new THREE.Vector3(0, 1, 0).cross(previousToNew).normalize();
 
-            this.mesh.rotateOnWorldAxis(rotationAxis, previousToNew.length() / (2 * Math.PI * this.radius));
+            this.mesh.rotateOnWorldAxis(rotationAxis, previousToNew.length() / this.radius);
         }
 
         if(this.velocity.length() < 0.01) {
