@@ -14,7 +14,7 @@ function createStructure() {
 }
 
 function createChassis() {
-    
+
 }
 
 function createWheel(x, y, z) {
@@ -85,7 +85,7 @@ function onKeyUp(e) {
  */
 function everyFrame() {
     update();
-    render();
+    display();
 
     requestAnimationFrame(everyFrame);
 }
@@ -93,7 +93,7 @@ function everyFrame() {
 /**
  * Renders the whole Structure
  */
-function render() {
+function display() {
     renderer.render(scene, camera);
 }
 
@@ -120,4 +120,19 @@ function init() {
 
 function update() {
     delta = clock.getDelta();
+
+    //Calling every active key actions
+    for(var key in pressedKeys) {
+        if(key in keyActions) {
+            keyActions[key]();
+        }
+    }
+
+    // calling every single action key
+    for (var key in pressedKeys) {
+        if (key in pressedKeyActions) {
+            pressedKeyActions[key]();
+            delete pressedKeys[key];
+        }
+    }
 }
