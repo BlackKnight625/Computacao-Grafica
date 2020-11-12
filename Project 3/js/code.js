@@ -4,7 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
-
+var gravity = new THREE.Vector3(0, -500, 0);
 
 var directionalLight;
 var spotlights = [];
@@ -15,6 +15,7 @@ var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
 //Glass shatering related
 var windowBroken = false;
 var glassShatteringBalls = [];
+var glassShards = [];
 
 /*----------Classes---------*/
 class Spotlight {
@@ -93,7 +94,7 @@ class GlassBreakingBall {
     velocity;
     radius;
     shatterAudio;
-    hitAudio;
+    hitAudioVolume;
 
     constructor(startingPosition, velocity, xLimit) {
         this.radius = 5;
@@ -107,7 +108,7 @@ class GlassBreakingBall {
         this.acceleration =  new THREE.Vector3(0, 0, 0);
 
         this.shatterAudio = new Audio("glass_shatter.mp3");
-        this.hitAudio = new Audio("metal_hit.wav");
+        this.hitAudioVolume = 1;
 
         allMeshes.push(this.ball);
         glassShatteringBalls.push(this);
@@ -140,19 +141,26 @@ class GlassBreakingBall {
     }
 
     dealWithWindowCollision() {
-        this.hitTarget = true;
         this.shatterAudio.play();
 
-        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -500, this.velocity.z * 0.05);
+        ballCollidedWithWindow(this.ball.position, this.velocity.clone().normalize().multiplyScalar(-1));
+
+        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, gravity.y, this.velocity.z * 0.05);
         this.velocity.multiplyScalar(-0.9);
+        this.hitTarget = true;
+        windowBroken = true;
     }
 
     dealWithFloorCollision() {
         this.velocity.multiplyScalar(0.7);
         this.velocity.y = -this.velocity.y;
 
-        this.hitAudio.volume *= 0.7;
-        this.hitAudio.play();
+        //Must create a new audio due to the fact that it can be played twice while it's still playing
+        var hitAudio = new Audio("metal_hit.wav");
+        hitAudio.volume = this.hitAudioVolume;
+        hitAudio.play();
+
+        this.hitAudioVolume *= 0.7;
 
         var newPosition = this.ball.position.clone();
         newPosition.y = this.radius;
@@ -189,7 +197,152 @@ class GlassBreakingBall {
             }            
         }
 
-        this.checkCollision();
+        if(this.velocity.length() >= 0.1) {
+            this.checkCollision();
+        }
+    }
+}
+
+class GlassShard {
+    shard;
+    shatterAudio;
+    acceleration;
+    velocity;
+    rotationAxis;
+    angleSpeed;
+    multiplier;
+    mesh;
+
+    constructor(spawnPosition, shootDirection, multiplier = 1) {
+        this.multiplier = multiplier;
+        
+        //Making a glass shard
+        var vertices = [];
+
+        var vertices = [
+            this.getRandomVector(20 * multiplier),
+            this.getRandomVector(20 * multiplier),
+            this.getRandomVector(20 * multiplier)
+        ];
+    
+        var faces = [
+            new THREE.Face3(0, 1, 2),
+        ];
+    
+        var geom = new THREE.Geometry();
+        geom.vertices = vertices;
+        geom.faces = faces;
+        geom.computeFaceNormals();
+    
+        var material = new currentGlobalMaterialClass({color: 0x7de5ff, opacity: 0.5, transparent: true});
+    
+        this.mesh = new THREE.Mesh(geom, material);
+
+        //Audio
+        this.shatterAudio = new Audio("glass_shatter_small.mp3");
+        this.shatterAudio.volume = 0.3 * multiplier;
+
+        //Position
+        var center = new THREE.Vector3();
+
+        center.add(vertices[0]);
+        center.add(vertices[1]);
+        center.add(vertices[2]);
+        center.multiplyScalar(1 / 3);
+
+        this.mesh.position.set(-center.x, -center.y, -center.z);
+
+        //Getting a velocity
+        this.velocity = shootDirection.clone().normalize();
+
+        var rotAxis1 = new THREE.Vector3(this.velocity.y, this.velocity.z, this.velocity.x);
+        var rotAxis2 = new THREE.Vector3(this.velocity.z, this.velocity.x, this.velocity.y);
+
+        rotateAroundAxis(this.velocity, rotAxis1, (Math.random() - 0.5) * 2 * Math.PI / 2);
+        rotateAroundAxis(this.velocity, rotAxis2, (Math.random() - 0.5) * 2 * Math.PI / 2);          
+
+        this.velocity.multiplyScalar((100 + Math.random() * 100) * multiplier);
+        this.velocity.y += 50 * multiplier;
+
+        this.acceleration = gravity;
+
+        //Rotation axis to make the shard spin
+        this.rotationAxis = new THREE.Vector3().random().normalize();
+        this.angleSpeed = 2 * Math.PI * (2 + Math.random() * 2); //2 - 4 spins per second 
+
+        //Adding to lists and scene
+        this.shard = new THREE.Object3D();
+        this.shard.add(this.mesh);
+        this.setPosition(spawnPosition);
+
+        scene.add(this.shard);
+        allMeshes.push(this.mesh);
+        glassShards.push(this);
+    }
+
+    setPosition(newPosition) {
+        this.shard.position.set(newPosition.x, newPosition.y, newPosition.z);
+    }
+
+    getRandomVector(multiplier = 1) {
+        return new THREE.Vector3().random().multiplyScalar(multiplier);
+    }
+
+    checkFloorCollision() {
+        //Checking for collisions with the floor
+        if(this.shard.position.y < 0) {
+            this.dealWithFloorCollision();
+        }
+    }
+
+    dealWithFloorCollision() {
+        this.shatterAudio.play();
+
+        //Removing the shard from all lists and scene
+        var index = allMeshes.indexOf(this.mesh);
+        if (index > -1) {
+            allMeshes.splice(index, 1);
+        }
+
+        index = glassShards.indexOf(this);
+        if (index > -1) {
+            glassShards.splice(index, 1);
+        }
+
+        scene.remove(this.shard);
+
+        if(Math.random() <= 0.1) {
+            //Chance of shattering into smaller shards
+            var shardAmount = Math.floor(2 + Math.random() * 3); //2 - 4 shards
+            var newPosition = this.shard.position.clone();
+            newPosition.y = 0;
+
+            for(i = 0; i < shardAmount; i++) {
+                new GlassShard(newPosition, new THREE.Vector3(0, 1, 0), this.multiplier / 2.0);
+            }
+        }
+    }
+
+    update() {
+        //Updating position and velocity
+        var newPosition = new THREE.Vector3();
+
+        newPosition.x = this.shard.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+        newPosition.y = this.shard.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+        newPosition.z = this.shard.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+
+        var newVelocity = new THREE.Vector3();
+
+        newVelocity.x = this.velocity.x + delta * this.acceleration.x;
+        newVelocity.y = this.velocity.y + delta * this.acceleration.y;
+        newVelocity.z = this.velocity.z + delta * this.acceleration.z;
+
+        this.setPosition(newPosition);
+        this.velocity = newVelocity;
+
+        this.shard.rotateOnWorldAxis(this.rotationAxis, delta * this.angleSpeed);
+
+        this.checkFloorCollision();
     }
 }
 
@@ -463,9 +616,9 @@ function init() {
 function update() {
     delta = clock.getDelta();
 
-    if(delta > 0.1) {
+    if(delta > 0.02) {
         //If the player leaves the browser, the next delta will be huge. This prevents bad things from happening
-        delta = 0.1;
+        delta = 0.02;
     }
 
     //Calling every active key actions
@@ -486,6 +639,11 @@ function update() {
     //Updating all glass shattering balls
     for(ball of glassShatteringBalls) {
         ball.update();
+    }
+
+    //Updating all the glass shards
+    for(shard of glassShards) {
+        shard.update();
     }
 }
 
@@ -541,4 +699,43 @@ function spawnGlassShatteringBall() {
     velocity.add(deviation);
 
     new GlassBreakingBall(position, velocity, 0);
+}
+
+function ballCollidedWithWindow(position, direction) {
+    if(windowBroken) {
+        spawnGlassShards(Math.floor(1 + Math.random() * 3), position, direction); //1 - 3
+    }
+    else {
+        //Window was broken for the first time
+        spawnGlassShards(Math.floor(4 + Math.random() * 12), position, direction); //4 - 15
+    }
+}
+
+function spawnGlassShards(amount, position, direction) {
+    for(i = 0; i < amount; i++) {
+        new GlassShard(position, direction);
+    }
+}
+
+function rotateAroundAxis(vector, axis, angle) {
+    axis = axis.clone().normalize();
+
+    var x = vector.x;
+    var y = vector.y;
+    var z = vector.z;
+    var x2 = axis.x;
+    var y2 = axis.y;
+    var z2 = axis.z;
+    var cosTheta = Math.cos(angle);
+    var sinTheta = Math.sin(angle);
+    var dotProduct = vector.dot(axis);
+    var xPrime = x2 * dotProduct * (1 - cosTheta) + x * cosTheta + (-z2 * y + y2 * z) * sinTheta;
+    var yPrime = y2 * dotProduct * (1 - cosTheta) + y * cosTheta + (z2 * x - x2 * z) * sinTheta;
+    var zPrime = z2 * dotProduct * (1 - cosTheta) + z * cosTheta + (-y2 * x + x2 * y) * sinTheta;
+
+    vector.x = xPrime;
+    vector.y = yPrime;
+    vector.z = zPrime;
+
+    return vector;
 }
