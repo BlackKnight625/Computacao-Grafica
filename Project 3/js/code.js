@@ -1,12 +1,42 @@
+const { TetrahedronGeometry } = require("../../Project 2/js/three");
+
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
+var cyberTruck;
 
 /**
  Creates the whole Structure
  */
 function createStructure() {
+    cyberTruck = new TetrahedronGeometry.Geometry();
+}
+
+function createWheel(x, y, z) {
+
+}
+
+function createWindshield(x, y, z) {
+
+}
+
+function createFrontWindow(x, y, z) {
+
+}
+
+/**
+ * For creating the 2 back windows
+ */
+function createBackWindow(x, y, z) {
+
+}
+
+function createDisplayStand() {
+
+}
+
+function createSpotlight(x, y, z) {
 
 }
 
