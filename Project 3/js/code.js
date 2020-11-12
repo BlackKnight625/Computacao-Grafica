@@ -6,6 +6,9 @@ var delta;
 var clock = new THREE.Clock();
 var gravity = new THREE.Vector3(0, -500, 0);
 
+
+var angleSpeed = 0.25; //0.25 spins per second
+var wholeStructure;
 var directionalLight;
 var spotlights = [];
 var allMeshes = [];
@@ -353,7 +356,7 @@ function createPodium(obj){
     var podiumMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
     var podiumGeometry = new THREE.CylinderGeometry(300, 200, 100, 50);
     podium = new THREE.Mesh(podiumGeometry, podiumMaterial);
-    podium.position.set(0, -50,0);
+    podium.position.set(0, -114, 0);
 
     allMeshes.push(podium);
     obj.add(podium);
@@ -362,17 +365,17 @@ function createPodium(obj){
 function createChassis(obj) {
 
     var boxMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-    var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
+    var boxGeometry = new THREE.BoxGeometry(380, 15, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
-    //Righ front wheel
-    var wheel1 = createWheel(0, 0, 0);
     //Left front wheel
-    var wheel2 = createWheel(0, 0, 0);
-    //Rigth back wheel
-    var wheel3 = createWheel(0, 0, 0);
+    var wheel1 = createWheel(-190, 0, 85);
+    //Right front wheel
+    var wheel2 = createWheel(-190, 0, -85);
     //Left back wheel
-    var wheel4 = createWheel(0, 0, 0);
+    var wheel3 = createWheel(190, 0, 85);
+    //Right back wheel
+    var wheel4 = createWheel(190, 0, -85);
 
     allMeshes.push(box);
 
@@ -381,7 +384,6 @@ function createChassis(obj) {
     obj.add(wheel3);
     obj.add(wheel4);
     obj.add(box);
-    
 }
 
 function createModel(obj) {
@@ -458,10 +460,22 @@ function createWheel(x, y, z) {
     var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
+    wheelMesh.rotation.x = Math.PI * 0.5;
 
     allMeshes.push(wheelMesh);
 
     return wheelMesh;
+}
+
+function createGround(obj){
+    var groundMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
+    var groundGeometry = new THREE.BoxGeometry(1000, 30, 600);
+    var ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.position.set(0, -179, 0);
+    
+    allMeshes.push(ground);
+    obj.add(ground);
+
 }
 
 
@@ -484,15 +498,22 @@ function createBackWindow(x, y, z) {
  Creates the whole Structure
  */
 function createStructure() {
+    wholeStructure = new THREE.Object3D();
     var cyberTruck = new THREE.Object3D();
     var podium  = new THREE.Object3D();
+    var ground = new THREE.Object3D();
 
     createPodium(podium);
     createChassis(cyberTruck);
+    createGround(ground);
+
+    wholeStructure.add(podium);
+    wholeStructure.add(cyberTruck); 
 
     //createModel(cyberTruck);
-    scene.add(cyberTruck);
-    scene.add(podium);
+    scene.add(ground);
+    scene.add(wholeStructure);
+
 }
 
 function createSpotlight(x, y, z) {
@@ -567,6 +588,10 @@ function addKeyActions() {
     pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
     pressedKeyActions[81] = function () {directionalLight.visible = !directionalLight.visible} //Q
     pressedKeyActions[113] = function () {directionalLight.visible = !directionalLight.visible} //q
+
+    //Translation actions
+    keyActions[37] = function() {rotateGroup(wholeStructure, 1);}; //Left arrow
+    keyActions[39] = function() {rotateGroup(wholeStructure, -1);}; //Right arrow
 
     pressedKeyActions[32] = function () {spawnGlassShatteringBall()} // Spacebar
 
@@ -738,4 +763,8 @@ function rotateAroundAxis(vector, axis, angle) {
     vector.z = zPrime;
 
     return vector;
+}
+
+function rotateGroup(group, multiplier) {
+    group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
 }
