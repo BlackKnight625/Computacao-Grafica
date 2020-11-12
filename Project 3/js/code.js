@@ -5,12 +5,27 @@ var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
 
+function createPodium(obj){
+    
+    var podiumMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
+    var podiumGeometry = new THREE.CylinderGeometry(300, 200, 100, 50);
+    podium = new THREE.Mesh(podiumGeometry, podiumMaterial);
+    podium.position.set(0, -50,0);
+
+    obj.add(podium);
+}
+
 function createChassis(obj) {
+
     var boxMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
     var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
+    var wheel = createWheel(0, 0, 0);
+
+    obj.add(wheel);
     obj.add(box);
+    
 }
 
 function createModel(obj) {
@@ -38,8 +53,14 @@ function createModel(obj) {
 }
 
 function createWheel(x, y, z) {
+    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0xFF8000});
+    var wheelGeometry = new THREE.CylinderGeometry(20,20,10,50);
+    var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheelMesh.position.set(x,y,z);
 
+    return wheelMesh;
 }
+
 
 function createWindshield(x, y, z) {
 
@@ -56,10 +77,6 @@ function createBackWindow(x, y, z) {
 
 }
 
-function createDisplayStand() {
-
-}
-
 function createSpotlight(x, y, z) {
 
 }
@@ -69,13 +86,22 @@ function createSpotlight(x, y, z) {
  */
 function createStructure() {
     var cyberTruck = new THREE.Object3D();
+    var podium  = new THREE.Object3D();
 
+    createPodium(podium);
     createChassis(cyberTruck);
 
     //createModel(cyberTruck);
-
     scene.add(cyberTruck);
+    scene.add(podium);
+
+    scene.traverse(function (node) {
+        console.log(node);
+    });
+    
 }
+
+
 
 /**
  * Called when the window is resized
