@@ -224,9 +224,20 @@ function createChassis(obj) {
     var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
-    var wheel = createWheel(0, 0, 0);
+    //Righ front wheel
+    var wheel1 = createWheel(0, 0, 0);
+    //Left front wheel
+    var wheel2 = createWheel(0, 0, 0);
+    //Rigth back wheel
+    var wheel3 = createWheel(0, 0, 0);
+    //Left back wheel
+    var wheel4 = createWheel(0, 0, 0);
 
-    obj.add(wheel);
+
+    obj.add(wheel1);
+    obj.add(wheel2);
+    obj.add(wheel3);
+    obj.add(wheel4);
     obj.add(box);
     
 }
@@ -257,7 +268,7 @@ function createModel(obj) {
 
 function createWheel(x, y, z) {
     var wheelMaterial = new THREE.MeshBasicMaterial({color: 0xFF8000});
-    var wheelGeometry = new THREE.CylinderGeometry(20,20,10,50);
+    var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
 
