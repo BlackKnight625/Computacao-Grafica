@@ -98,13 +98,7 @@ function createStructure() {
     //createModel(cyberTruck);
 
     scene.add(cyberTruck);
-
-    //Temporary
-    var material = new THREE.MeshPhongMaterial({color: 0x555555});
-    var sphere = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 32), material);
-
-    scene.add(sphere);
-
+    
     //Creating spotlights
     createSpotlight(100, 100, 100);
     createSpotlight(0, 100, -150);
