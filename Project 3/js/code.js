@@ -98,7 +98,7 @@ class GlassBreakingBall {
     constructor(startingPosition, velocity, xLimit) {
         this.radius = 5;
 
-        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x999999});
+        var sphereMaterial = new currentGlobalMaterialClass({color: 0x999999});
         this.ball = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 32, 32), sphereMaterial);
         this.setPosition(startingPosition);
 
@@ -143,7 +143,7 @@ class GlassBreakingBall {
         this.hitTarget = true;
         this.shatterAudio.play();
 
-        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -98, this.velocity.z * 0.05);
+        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -500, this.velocity.z * 0.05);
         this.velocity.multiplyScalar(-0.9);
     }
 
@@ -194,19 +194,6 @@ class GlassBreakingBall {
 }
 
 /*----------Methods---------*/
-
-/**
- Creates the whole Structure
- */
-function createStructure() {
-    var cyberTruck = new THREE.Object3D();
-
-    createChassis(cyberTruck);
-
-    //createModel(cyberTruck);
-
-    scene.add(cyberTruck);
-}
 
 function createPodium(obj){
     
@@ -334,10 +321,6 @@ function createBackWindow(x, y, z) {
 
 }
 
-function createSpotlight(x, y, z) {
-    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
-}
-
 /**
  Creates the whole Structure
  */
@@ -348,16 +331,13 @@ function createStructure() {
     createPodium(podium);
     createChassis(cyberTruck);
 
-    createModel(cyberTruck);
-
     //createModel(cyberTruck);
     scene.add(cyberTruck);
     scene.add(podium);
+}
 
-    scene.traverse(function (node) {
-        console.log(node);
-    });
-    
+function createSpotlight(x, y, z) {
+    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
 }
 
 function createDirectionalLight() {
@@ -546,10 +526,11 @@ function toggleGouraudPhong() {
 }
 
 function spawnGlassShatteringBall() {
-    var deviation = new THREE.Vector3().random().multiplyScalar(2);
+    var deviation = new THREE.Vector3().random().multiplyScalar(3);
+    var extraSpeed = 30 * (Math.random() - 0.5);
 
     var position = new THREE.Vector3(300, 300, 300);
-    var velocity = new THREE.Vector3(-60, 0, 0);
+    var velocity = new THREE.Vector3(-80 + extraSpeed, 0, 0);
 
     velocity.add(deviation);
 
