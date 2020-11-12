@@ -229,7 +229,6 @@ function createChassis(obj) {
     obj.add(wheel3);
     obj.add(wheel4);
     obj.add(box);
-    
 }
 
 function createModel(obj) {
@@ -313,6 +312,17 @@ function createWheel(x, y, z) {
     return wheelMesh;
 }
 
+function createGround(obj){
+    var groundMaterial = new THREE.MeshBasicMaterial({color: 0x606060});
+    var groundGeometry = new THREE.BoxGeometry(1000, 30, 600);
+    var ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.position.set(0, -179, 0);
+    
+    allMeshes.push(ground);
+    obj.add(ground);
+
+}
+
 
 function createWindshield(x, y, z) {
 
@@ -336,14 +346,17 @@ function createStructure() {
     wholeStructure = new THREE.Object3D();
     var cyberTruck = new THREE.Object3D();
     var podium  = new THREE.Object3D();
+    var ground = new THREE.Object3D();
 
     createPodium(podium);
     createChassis(cyberTruck);
+    createGround(ground);
 
     wholeStructure.add(podium);
     wholeStructure.add(cyberTruck); 
 
     //createModel(cyberTruck);
+    scene.add(ground);
     scene.add(wholeStructure);
 
 }
