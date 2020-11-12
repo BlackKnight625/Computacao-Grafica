@@ -373,14 +373,16 @@ function createChassis(obj) {
     var boxGeometry = new THREE.BoxGeometry(380, 15, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
+    box.position.set(0, 32, 0);
+
     //Left front wheel
-    var wheel1 = createWheel(-190, 0, 85);
+    var wheel1 = createWheel(-190, 32, 85);
     //Right front wheel
-    var wheel2 = createWheel(-190, 0, -85);
+    var wheel2 = createWheel(-190, 32, -85);
     //Left back wheel
-    var wheel3 = createWheel(190, 0, 85);
+    var wheel3 = createWheel(190, 32, 85);
     //Right back wheel
-    var wheel4 = createWheel(190, 0, -85);
+    var wheel4 = createWheel(190, 32, -85);
 
     allMeshes.push(box);
 
@@ -498,21 +500,23 @@ function createModel(obj) {
 }
 
 function createWheel(x, y, z) {
-    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0xFF8000});
-    var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
+    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0x202020});
+    var wheelGeometry = new THREE.CylinderGeometry(50, 50, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
     wheelMesh.rotation.x = Math.PI * 0.5;
 
     allMeshes.push(wheelMesh);
+
+    return wheelMesh;
 }
 
 function createWindshield(obj) {
     var vertices = [
-        new THREE.Vector3(-185, 127, 75), //ws_0
-        new THREE.Vector3(-185, 127, -75), //ws_1
-        new THREE.Vector3(-20, 190, 60), //ws_2
-        new THREE.Vector3(-20, 190, -60), //ws_3
+        new THREE.Vector3(-185, 127, 75), //ws_0 (16)
+        new THREE.Vector3(-185, 127, -75), //ws_1 (17)
+        new THREE.Vector3(-20, 190, 65), //ws_2 (18)
+        new THREE.Vector3(-20, 190, -65), //ws_3 (19)
     ];
 
     var faces = [
@@ -585,15 +589,6 @@ function createBackWindow(x, y, z) {
 
 }
 
-function createWheel(x, y, z) {
-    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0xFF8000});
-    var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
-    var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
-    wheelMesh.position.set(x,y,z);
-
-    return wheelMesh;
-}
-
 /**
  Creates the whole Structure
  */
@@ -606,8 +601,10 @@ function createStructure() {
     createPodium(podium);
     createChassis(cyberTruck);
     createModel(cyberTruck);
-    //createWindshield(cyberTruck);
-    //createSideWindows(cyberTruck);
+    createWindshield(cyberTruck);
+    createSideWindows(cyberTruck);
+
+    cyberTruck.position.set(0, -46, 0);
 
     createGround(ground);
 
