@@ -202,6 +202,7 @@ function createPodium(obj){
     podium = new THREE.Mesh(podiumGeometry, podiumMaterial);
     podium.position.set(0, -50,0);
 
+    allMeshes.push(podium);
     obj.add(podium);
 }
 
@@ -220,6 +221,7 @@ function createChassis(obj) {
     //Left back wheel
     var wheel4 = createWheel(0, 0, 0);
 
+    allMeshes.push(box);
 
     obj.add(wheel1);
     obj.add(wheel2);
@@ -293,6 +295,8 @@ function createModel(obj) {
 
     var mesh = new THREE.Mesh(geom, material);
 
+    allMeshes.push(mesh);
+
     obj.add(mesh);
 }
 
@@ -301,6 +305,8 @@ function createWheel(x, y, z) {
     var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
+
+    allMeshes.push(wheelMesh);
 
     return wheelMesh;
 }
