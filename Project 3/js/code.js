@@ -5,7 +5,8 @@ var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
 
-
+var angleSpeed = 0.25; //0.25 spins per second
+var wholeStructure;
 var directionalLight;
 var spotlights = [];
 var allMeshes = [];
@@ -332,15 +333,19 @@ function createBackWindow(x, y, z) {
  Creates the whole Structure
  */
 function createStructure() {
+    wholeStructure = new THREE.Object3D();
     var cyberTruck = new THREE.Object3D();
     var podium  = new THREE.Object3D();
 
     createPodium(podium);
     createChassis(cyberTruck);
 
+    wholeStructure.add(podium);
+    wholeStructure.add(cyberTruck); 
+
     //createModel(cyberTruck);
-    scene.add(cyberTruck);
-    scene.add(podium);
+    scene.add(wholeStructure);
+
 }
 
 function createSpotlight(x, y, z) {
@@ -415,6 +420,10 @@ function addKeyActions() {
     pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
     pressedKeyActions[81] = function () {directionalLight.visible = !directionalLight.visible} //Q
     pressedKeyActions[113] = function () {directionalLight.visible = !directionalLight.visible} //q
+
+    //Translation actions
+    keyActions[37] = function() {rotateGroup(wholeStructure, 1);}; //Left arrow
+    keyActions[39] = function() {rotateGroup(wholeStructure, -1);}; //Right arrow
 
     pressedKeyActions[32] = function () {spawnGlassShatteringBall()} // Spacebar
 
@@ -542,4 +551,8 @@ function spawnGlassShatteringBall() {
     velocity.add(deviation);
 
     new GlassBreakingBall(position, velocity, 0);
+}
+
+function rotateGroup(group, multiplier) {
+    group.rotateY(multiplier * delta * 2 * angleSpeed * Math.PI);
 }
