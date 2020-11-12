@@ -4,6 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
+var directionalLight;
 
 var spotlights = [];
 var allMeshes = [];
@@ -38,7 +39,6 @@ class Spotlight {
 
         //Creating the light
         this.light = new THREE.SpotLight(0xffffff);
-        this.light.castShadow = true;
         this.light.angle = Math.PI / 3;
 
         //Getting the rotation needed to make the spolight face the middle
@@ -78,10 +78,6 @@ class Spotlight {
 
         this.light.visible = !this.light.visible;
     }
-
-    update() {
-        this.light.shadow.camera = camera;
-    }
 }
 
 /*----------Methods---------*/
@@ -97,11 +93,6 @@ function createStructure() {
     //createModel(cyberTruck);
 
     scene.add(cyberTruck);
-    
-    //Creating spotlights
-    createSpotlight(100, 100, 100);
-    createSpotlight(0, 100, -150);
-    createSpotlight(-100, 100, 100);
 }
 
 function createChassis(obj) {
@@ -161,6 +152,12 @@ function createDisplayStand() {
 
 function createSpotlight(x, y, z) {
     spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
+}
+
+function createDirectionalLight() {
+    directionalLight = new THREE.DirectionalLight(0xffffff);
+
+    scene.add(directionalLight);
 }
 
 /**
@@ -223,6 +220,8 @@ function addKeyActions() {
     pressedKeyActions[119] = function () {switchBasicMaterials()} //w
     pressedKeyActions[69] = function () {toggleGouraudPhong()} //E
     pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
+    pressedKeyActions[81] = function () {directionalLight.visible = !directionalLight.visible} //Q
+    pressedKeyActions[113] = function () {directionalLight.visible = !directionalLight.visible} //q
 }
 
 /**
@@ -247,6 +246,12 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createStructure();
+    createDirectionalLight();
+
+    //Creating spotlights
+    createSpotlight(100, 100, 100);
+    createSpotlight(0, 100, -150);
+    createSpotlight(-100, 100, 100);
 
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
@@ -276,6 +281,7 @@ function update() {
             delete pressedKeys[key];
         }
     }
+
 }
 
 function replaceEveryonesMaterials() {
