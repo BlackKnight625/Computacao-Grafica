@@ -13,6 +13,10 @@ function createStructure() {
     cyberTruck = new TetrahedronGeometry.Geometry();
 }
 
+function createChassis() {
+    
+}
+
 function createWheel(x, y, z) {
 
 }
