@@ -12,25 +12,25 @@ var spotlights = [];
 class Spotlight {
     light;
     structure;
-    on;
-    cylinder;
+    cone;
 
     constructor(x, y, z, targetX, targetY, targetZ) {
         this.structure = new THREE.Object3D();
 
-        var cylHeight = 25;
-        var cylTranslationUp = 20;
+        var coneHeight = 25;
+        var coneTranslationUp = 20;
 
         //Creating the sphere and cylinder for the spotlight
         var sphereMaterial = new THREE.MeshPhongMaterial({color: 0x550000});
-        var cylinderMaterial = new THREE.MeshPhongMaterial({color: 0x551100});
+        var coneMaterial = new THREE.MeshPhongMaterial({color: 0x551100});
         var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 32), sphereMaterial);
-        this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, cylHeight, 32), cylinderMaterial);
+        this.cone = new THREE.Mesh(new THREE.ConeGeometry(10, coneHeight, 32), coneMaterial);
 
-        this.cylinder.position.set(0, cylTranslationUp, 0);
+        this.cone.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), Math.PI);
+        this.cone.position.set(0, coneTranslationUp, 0);
 
         this.structure.add(sphere);
-        this.structure.add(this.cylinder);
+        this.structure.add(this.cone);
 
         //Creating the light
         this.light = new THREE.SpotLight(0xffffff);
@@ -51,33 +51,28 @@ class Spotlight {
         this.structure.rotateOnWorldAxis(rotationAxis, angle);
         this.structure.position.set(x, y, z);
 
-        var aux = cylHeight + cylTranslationUp;
+        var aux = coneHeight + coneTranslationUp;
         this.light.position.set(x + toMiddle.x * aux, y + toMiddle.y * aux, z + toMiddle.z * aux);
 
-        this.on = false;
+        this.light.visible = false;
 
         scene.add(this.structure);
+        scene.add(this.light);
     }
 
     flickerLight() {
         var colorModification = new THREE.Color(0x002200);
 
-        if(this.on) {
-            //Light is on. Remove it
-            scene.remove(this.light);
-            
+        if(this.light.visible) {
             //Making the spotlight's head less yellow
-            this.cylinder.material.color.sub(colorModification);
+            this.cone.material.color.sub(colorModification);
         }
         else {
-            //Light is off. Light it up
-            scene.add(this.light);
-
             //Making the spotlight's head more yellow
-            this.cylinder.material.color.add(colorModification);
+            this.cone.material.color.add(colorModification);
         }
 
-        this.on = !this.on;
+        this.light.visible = !this.light.visible;
     }
 
     update() {
