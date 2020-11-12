@@ -1,10 +1,50 @@
-const { TetrahedronGeometry } = require("../../Project 2/js/three");
-
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var cyberTruck;
+
+var spotlights = [];
+
+
+/*----------Classes---------*/
+class Spotlight {
+    light;
+    spotlight;
+    on;
+
+    constructor(x, y, z, targetX, targetY, targetZ) {
+        this.spotlight = new THREE.Object3D();
+
+        //Creating the sphere and cylinder for the spotlight
+        var material = new THREE.MeshBasicMaterial({color: 0xFFFDFD});
+        var sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), material);
+        var cylinder = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 5, 32), material);
+
+        cylinder.position.set(0, 2.5, 0);
+
+        this.spotlight.add(sphere);
+        this.spotlight.add(cylinder);
+
+        //Creating the light
+        this.light = THREE.PointLight(0xffffff, 1, 2);
+
+        this.on = false;
+    }
+
+    flickerLight() {
+        if(this.on) {
+            scene.remove(light);
+        }
+        else {
+            scene.add(light);
+        }
+
+        this.on = !this.on;
+    }
+}
+
+/*----------Methods---------*/
 
 /**
  Creates the whole Structure
