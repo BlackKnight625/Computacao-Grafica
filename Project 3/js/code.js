@@ -15,13 +15,57 @@ function createChassis(obj) {
 
 function createModel(obj) {
     var vertices = [
-        new THREE.Vector3(0, 100, 0),
-        new THREE.Vector3(100, 100, 0),
-        new THREE.Vector3(-100, 100, 0)
+        new THREE.Vector3(-254, 100, 90), //0
+        new THREE.Vector3(-254, 100, -90), //1
+        new THREE.Vector3(-286, 90, 52), //2
+        new THREE.Vector3(-286, 90, -52), //3
+        new THREE.Vector3(301, 127, -90), //4
+        new THREE.Vector3(301, 127, 90), //5
+        new THREE.Vector3(-16, 190, -69), //6
+        new THREE.Vector3(-16, 190, 69), //7
+        new THREE.Vector3(295, 53, -85), //8
+        new THREE.Vector3(295, 53, 85), //9
+        new THREE.Vector3(254, 32, -80), //10
+        new THREE.Vector3(254, 32, 80), //11
+        new THREE.Vector3(-254, 32, -80), //12
+        new THREE.Vector3(-254, 32, 80), //13
+        new THREE.Vector3(-283, 53, -52), //14
+        new THREE.Vector3(-283, 53, 52), //15
     ];
 
     var faces = [
-        new THREE.Face3(0, 2, 1)
+        new THREE.Face3(0, 1, 2),
+        new THREE.Face3(2, 1, 3),
+        new THREE.Face3(0, 7, 1),
+        new THREE.Face3(7, 6, 1),
+        new THREE.Face3(0, 5, 7),
+        new THREE.Face3(4, 1, 6),
+        new THREE.Face3(5, 6, 7),
+        new THREE.Face3(5, 4, 6),
+        new THREE.Face3(0, 9, 5),
+        new THREE.Face3(1, 4, 8),
+        new THREE.Face3(11, 9, 5),
+        new THREE.Face3(10, 4, 8),
+        new THREE.Face3(2, 15, 13),
+        new THREE.Face3(13, 0, 2),
+        new THREE.Face3(1, 14, 3),
+        new THREE.Face3(1, 12, 14),
+        new THREE.Face3(13, 11, 5),
+        new THREE.Face3(12, 4, 10),
+        new THREE.Face3(13, 5, 0),
+        new THREE.Face3(1, 4, 12),
+        new THREE.Face3(5, 9, 4),
+        new THREE.Face3(9, 8, 4),
+        new THREE.Face3(9, 11, 8),
+        new THREE.Face3(11, 10, 8),
+        new THREE.Face3(3, 14, 2),
+        new THREE.Face3(14, 15, 2),
+        new THREE.Face3(14, 12, 15),
+        new THREE.Face3(12, 13, 15),
+        new THREE.Face3(14, 12, 15),
+        new THREE.Face3(12, 13, 15),
+        new THREE.Face3(11, 13, 12),
+        new THREE.Face3(12, 10, 11),
     ];
 
     var geom = new THREE.Geometry();
@@ -29,10 +73,9 @@ function createModel(obj) {
     geom.faces = faces;
     geom.computeFaceNormals();
 
-    var material = new THREE.MeshBasicMaterial({color: 0x33FF99});
+    var material = new THREE.MeshBasicMaterial({color: 0xc0c0c0});
 
-
-    var mesh = new THREE.SceneUtils.createMultiMaterialObject(geom, material);
+    var mesh = new THREE.Mesh(geom, material);
 
     obj.add(mesh);
 }
@@ -72,7 +115,7 @@ function createStructure() {
 
     createChassis(cyberTruck);
 
-    //createModel(cyberTruck);
+    createModel(cyberTruck);
 
     scene.add(cyberTruck);
 }
