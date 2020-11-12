@@ -11,6 +11,10 @@ var allMeshes = [];
 var basicMaterialToggleClass = THREE.MeshBasicMaterial;
 var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
 
+//Glass shatering related
+var windowBroken = false;
+var glassShatteringBalls = [];
+
 /*----------Classes---------*/
 class Spotlight {
     light;
@@ -77,6 +81,114 @@ class Spotlight {
         }
 
         this.light.visible = !this.light.visible;
+    }
+}
+
+class GlassBreakingBall {
+    hitTarget = false;
+    ball;
+    xLimit;
+    acceleration;
+    velocity;
+    radius;
+    shatterAudio;
+    hitAudio;
+
+    constructor(startingPosition, velocity, xLimit) {
+        this.radius = 5;
+
+        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x999999});
+        this.ball = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 32, 32), sphereMaterial);
+        this.setPosition(startingPosition);
+
+        this.xLimit = xLimit;
+        this.velocity = velocity;
+        this.acceleration =  new THREE.Vector3(0, 0, 0);
+
+        this.shatterAudio = new Audio("glass_shatter.mp3");
+        this.hitAudio = new Audio("metal_hit.wav");
+
+        allMeshes.push(this.ball);
+        glassShatteringBalls.push(this);
+        scene.add(this.ball);
+    }
+
+    setPosition(newPosition) {
+        this.ball.position.set(newPosition.x, newPosition.y, newPosition.z);
+    }
+
+    checkCollision() {
+        /*Disclaimer: Since this is an easter egg, not a requirement of the project, the collision dealing methods are
+        not sofisticated, for simplicity*/
+
+        if(this.hitTarget) {
+            //The window has already been broken. Checking for collisions with the floor
+            if(this.ball.position.y - this.radius < 0) {
+                this.dealWithFloorCollision();
+            }
+        }
+        else {
+            //The ball is still moving towards the window. Checking for window collisions
+            var ballToXPlane = new THREE.Vector3(this.xLimit - this.ball.position.x, 0, 0);
+
+            if(ballToXPlane.dot(this.velocity) < 0) {
+                //Ball surpassed the x plane
+                this.dealWithWindowCollision();
+            }
+        }
+    }
+
+    dealWithWindowCollision() {
+        this.hitTarget = true;
+        this.shatterAudio.play();
+
+        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -98, this.velocity.z * 0.05);
+        this.velocity.multiplyScalar(-0.9);
+    }
+
+    dealWithFloorCollision() {
+        this.velocity.multiplyScalar(0.7);
+        this.velocity.y = -this.velocity.y;
+
+        this.hitAudio.volume *= 0.7;
+        this.hitAudio.play();
+
+        var newPosition = this.ball.position.clone();
+        newPosition.y = this.radius;
+
+        this.setPosition(newPosition); //Poorly done on purpose
+    }
+
+    update() {
+        //Updating position and velocity
+        var newPosition = new THREE.Vector3();
+
+        newPosition.x = this.ball.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+        newPosition.y = this.ball.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+        newPosition.z = this.ball.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+
+        var newVelocity = new THREE.Vector3();
+
+        newVelocity.x = this.velocity.x + delta * this.acceleration.x;
+        newVelocity.y = this.velocity.y + delta * this.acceleration.y;
+        newVelocity.z = this.velocity.z + delta * this.acceleration.z;
+
+        this.setPosition(newPosition);
+        this.velocity = newVelocity;
+
+        if(this.velocity.x + this.velocity.z < 0.1) {
+            if(this.velocity.length() < 0.01) {
+                //Velocity too small. Make it stand still
+                this.velocity = new THREE.Vector3();
+                this.acceleration = new THREE.Vector3();
+            }
+            else if (this.hitTarget) {
+                this.velocity.x = 0;
+                this.velocity.z = 0;
+            }            
+        }
+
+        this.checkCollision();
     }
 }
 
@@ -222,6 +334,8 @@ function addKeyActions() {
     pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
     pressedKeyActions[81] = function () {directionalLight.visible = !directionalLight.visible} //Q
     pressedKeyActions[113] = function () {directionalLight.visible = !directionalLight.visible} //q
+
+    pressedKeyActions[32] = function () {spawnGlassShatteringBall()} // Spacebar
 }
 
 /**
@@ -267,6 +381,11 @@ function init() {
 function update() {
     delta = clock.getDelta();
 
+    if(delta > 0.1) {
+        //If the player leaves the browser, the next delta will be huge. This prevents bad things from happening
+        delta = 0.1;
+    }
+
     //Calling every active key actions
     for(var key in pressedKeys) {
         if(key in keyActions) {
@@ -282,6 +401,10 @@ function update() {
         }
     }
 
+    //Updating all glass shattering balls
+    for(ball of glassShatteringBalls) {
+        ball.update();
+    }
 }
 
 function replaceEveryonesMaterials() {
@@ -324,4 +447,15 @@ function toggleGouraudPhong() {
     }
 
     replaceEveryonesMaterials();
+}
+
+function spawnGlassShatteringBall() {
+    var deviation = new THREE.Vector3().random().multiplyScalar(2);
+
+    var position = new THREE.Vector3(300, 300, 300);
+    var velocity = new THREE.Vector3(-60, 0, 0);
+
+    velocity.add(deviation);
+
+    new GlassBreakingBall(position, velocity, 0);
 }
