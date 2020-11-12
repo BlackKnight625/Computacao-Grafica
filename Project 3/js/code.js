@@ -1,16 +1,16 @@
-const { TetrahedronGeometry } = require("../../Project 2/js/three");
-
+var camera, renderer, scene;
 var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var cyberTruck;
+var clock = new THREE.Clock();
 
 /**
  Creates the whole Structure
  */
 function createStructure() {
-    cyberTruck = new TetrahedronGeometry.Geometry();
+    
 }
 
 function createChassis() {
@@ -60,8 +60,6 @@ function onKeyDown(e) {
     'use strict';
     var key = e.keyCode;
 
-    console.log(key);
-
     pressedKeys[key] = true;
 }
 
@@ -83,11 +81,11 @@ function onKeyUp(e) {
 /**
  * Called every frame
  */
-function everyFrame() {
+function animate() {
     update();
     display();
 
-    requestAnimationFrame(everyFrame);
+    requestAnimationFrame(animate);
 }
 
 /**
@@ -105,6 +103,23 @@ function addKeyActions() {
  * Called at the beggining of the program
  */
 function init() {
+    scene = new THREE.Scene();
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(new THREE.Color(0xEEEEEE));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.x = 200;
+    camera.position.y = 200;
+    camera.position.z = 200;
+    camera.lookAt(scene.position);
+
+    var axes = new THREE.AxesHelper(20);
+    scene.add(axes);
+
+    document.body.appendChild(renderer.domElement);
+
     createStructure();
 
     //Adding event listeners
@@ -115,7 +130,7 @@ function init() {
     //Adding key actions
     addKeyActions();
 
-    requestAnimationFrame(everyFrame);
+    animate();
 }
 
 function update() {
