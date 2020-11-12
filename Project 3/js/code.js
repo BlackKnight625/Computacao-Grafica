@@ -4,6 +4,96 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
+var directionalLight;
+
+var spotlights = [];
+var allMeshes = [];
+var basicMaterialToggleClass = THREE.MeshBasicMaterial;
+var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
+
+/*----------Classes---------*/
+class Spotlight {
+    light;
+    structure;
+    cone;
+
+    constructor(x, y, z, targetX, targetY, targetZ) {
+        this.structure = new THREE.Object3D();
+
+        var coneHeight = 25;
+        var coneTranslationUp = 20;
+
+        //Creating the sphere and cylinder for the spotlight
+        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x550000});
+        var coneMaterial = new THREE.MeshBasicMaterial({color: 0x551100});
+        var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 32), sphereMaterial);
+        this.cone = new THREE.Mesh(new THREE.ConeGeometry(10, coneHeight, 32), coneMaterial);
+
+        allMeshes.push(sphere, this.cone);
+
+        this.cone.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), Math.PI);
+        this.cone.position.set(0, coneTranslationUp, 0);
+
+        this.structure.add(sphere);
+        this.structure.add(this.cone);
+
+        //Creating the light
+        this.light = new THREE.SpotLight(0xffffff);
+        this.light.angle = Math.PI / 3;
+
+        //Getting the rotation needed to make the spolight face the middle
+
+        //Vector that points to the origin
+        var toMiddle = new THREE.Vector3(targetX - x, targetY - y, targetZ - z).normalize();
+        //Vector that points at the direction the spotlight is facing
+        var direction = new THREE.Vector3(0, 1, 0);
+
+        var rotationAxis = toMiddle.clone().cross(direction);
+        var angle = -toMiddle.angleTo(direction);
+
+        //Making the spotlight face the middle
+        this.structure.rotateOnWorldAxis(rotationAxis, angle);
+        this.structure.position.set(x, y, z);
+
+        var aux = coneHeight + coneTranslationUp;
+        this.light.position.set(x + toMiddle.x * aux, y + toMiddle.y * aux, z + toMiddle.z * aux);
+
+        this.light.visible = false;
+
+        scene.add(this.structure);
+        scene.add(this.light);
+    }
+
+    flickerLight() {
+        var colorModification = new THREE.Color(0x002200);
+
+        if(this.light.visible) {
+            //Making the spotlight's head less yellow
+            this.cone.material.color.sub(colorModification);
+        }
+        else {
+            //Making the spotlight's head more yellow
+            this.cone.material.color.add(colorModification);
+        }
+
+        this.light.visible = !this.light.visible;
+    }
+}
+
+/*----------Methods---------*/
+
+/**
+ Creates the whole Structure
+ */
+function createStructure() {
+    var cyberTruck = new THREE.Object3D();
+
+    createChassis(cyberTruck);
+
+    //createModel(cyberTruck);
+
+    scene.add(cyberTruck);
+}
 
 function createPodium(obj){
     
@@ -78,9 +168,10 @@ function createBackWindow(x, y, z) {
 }
 
 function createSpotlight(x, y, z) {
-
+    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
 }
 
+<<<<<<< HEAD
 /**
  Creates the whole Structure
  */
@@ -99,6 +190,12 @@ function createStructure() {
         console.log(node);
     });
     
+=======
+function createDirectionalLight() {
+    directionalLight = new THREE.DirectionalLight(0xffffff);
+
+    scene.add(directionalLight);
+>>>>>>> 09f50265a2700fb460257b912b9a45b8084bc099
 }
 
 
@@ -155,7 +252,16 @@ function display() {
 }
 
 function addKeyActions() {
+    pressedKeyActions[49] = function () {spotlights[0].flickerLight()}; //1
+    pressedKeyActions[50] = function () {spotlights[1].flickerLight()}; //2
+    pressedKeyActions[51] = function () {spotlights[2].flickerLight()}; //3
 
+    pressedKeyActions[87] = function () {switchBasicMaterials()} //W
+    pressedKeyActions[119] = function () {switchBasicMaterials()} //w
+    pressedKeyActions[69] = function () {toggleGouraudPhong()} //E
+    pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
+    pressedKeyActions[81] = function () {directionalLight.visible = !directionalLight.visible} //Q
+    pressedKeyActions[113] = function () {directionalLight.visible = !directionalLight.visible} //q
 }
 
 /**
@@ -180,6 +286,12 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createStructure();
+    createDirectionalLight();
+
+    //Creating spotlights
+    createSpotlight(100, 100, 100);
+    createSpotlight(0, 100, -150);
+    createSpotlight(-100, 100, 100);
 
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
@@ -209,4 +321,47 @@ function update() {
             delete pressedKeys[key];
         }
     }
+
+}
+
+function replaceEveryonesMaterials() {
+    //Switching all mesh's materials with the current global one
+    for(var mesh of allMeshes) {
+        mesh.material = new currentGlobalMaterialClass({color: mesh.material.color.getHex()});
+    }
+}
+
+function switchBasicMaterials() {
+    if(currentGlobalMaterialClass != THREE.MeshBasicMaterial) {
+        //Time to turn every Mesh into a Basic one
+        basicMaterialToggleClass = currentGlobalMaterialClass;
+        currentGlobalMaterialClass = THREE.MeshBasicMaterial;
+
+        replaceEveryonesMaterials();
+    }
+    else {
+        if(basicMaterialToggleClass != THREE.MeshBasicMaterial) {
+            //Time to turn every Mesh back to their original material
+            currentGlobalMaterialClass = basicMaterialToggleClass;
+
+            replaceEveryonesMaterials();
+        }
+    }
+}
+
+function toggleGouraudPhong() {
+    if(currentGlobalMaterialClass != THREE.MeshBasicMaterial) {
+        if(currentGlobalMaterialClass == THREE.MeshPhongMaterial) {
+            currentGlobalMaterialClass = THREE.MeshLambertMaterial;
+        }
+        else {
+            currentGlobalMaterialClass = THREE.MeshPhongMaterial;
+        }
+    }
+    else {
+        //Current material is basic. Defaulting to Phong
+        currentGlobalMaterialClass = THREE.MeshPhongMaterial;
+    }
+
+    replaceEveryonesMaterials();
 }
