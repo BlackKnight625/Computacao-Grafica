@@ -213,7 +213,7 @@ function createPodium(obj){
     var podiumMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
     var podiumGeometry = new THREE.CylinderGeometry(300, 200, 100, 50);
     podium = new THREE.Mesh(podiumGeometry, podiumMaterial);
-    podium.position.set(0, -50,0);
+    podium.position.set(0, -114, 0);
 
     obj.add(podium);
 }
@@ -221,17 +221,17 @@ function createPodium(obj){
 function createChassis(obj) {
 
     var boxMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-    var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
+    var boxGeometry = new THREE.BoxGeometry(380, 15, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
-    //Righ front wheel
-    var wheel1 = createWheel(0, 0, 0);
     //Left front wheel
-    var wheel2 = createWheel(0, 0, 0);
-    //Rigth back wheel
-    var wheel3 = createWheel(0, 0, 0);
+    var wheel1 = createWheel(-190, 0, 85);
+    //Right front wheel
+    var wheel2 = createWheel(-190, 0, -85);
     //Left back wheel
-    var wheel4 = createWheel(0, 0, 0);
+    var wheel3 = createWheel(190, 0, 85);
+    //Right back wheel
+    var wheel4 = createWheel(190, 0, -85);
 
 
     obj.add(wheel1);
@@ -271,6 +271,7 @@ function createWheel(x, y, z) {
     var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
+    wheelMesh.rotation.x = Math.PI * 0.5;
 
     return wheelMesh;
 }
