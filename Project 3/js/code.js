@@ -87,6 +87,30 @@ class Spotlight {
 
 /*----------Methods---------*/
 
+/**
+ Creates the whole Structure
+ */
+function createStructure() {
+    var cyberTruck = new THREE.Object3D();
+
+    createChassis(cyberTruck);
+
+    //createModel(cyberTruck);
+
+    scene.add(cyberTruck);
+
+    //Temporary
+    var material = new THREE.MeshPhongMaterial({color: 0x555555});
+    var sphere = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 32), material);
+
+    scene.add(sphere);
+
+    //Creating spotlights
+    createSpotlight(100, 100, 100);
+    createSpotlight(0, 100, -150);
+    createSpotlight(-100, 100, 100);
+}
+
 function createChassis(obj) {
     var boxMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
     var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
@@ -144,30 +168,6 @@ function createDisplayStand() {
 
 function createSpotlight(x, y, z) {
     spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
-}
-
-/**
- Creates the whole Structure
- */
-function createStructure() {
-    var cyberTruck = new THREE.Object3D();
-
-    createChassis(cyberTruck);
-
-    //createModel(cyberTruck);
-
-    scene.add(cyberTruck);
-
-    //Temporary
-    var material = new THREE.MeshPhongMaterial({color: 0x555555});
-    var sphere = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 32), material);
-
-    scene.add(sphere);
-
-    //Creating spotlights
-    createSpotlight(100, 100, 100);
-    createSpotlight(0, 100, -150);
-    createSpotlight(-100, 100, 100);
 }
 
 /**
