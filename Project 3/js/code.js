@@ -3,18 +3,38 @@ var pressedKeys = {};
 var keyActions = {};
 var pressedKeyActions = {};
 var delta;
-var cyberTruck;
 var clock = new THREE.Clock();
 
-/**
- Creates the whole Structure
- */
-function createStructure() {
-    
+function createChassis(obj) {
+    var boxMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+    var boxGeometry = new THREE.BoxGeometry(380, 1, 170);
+    var box = new THREE.Mesh(boxGeometry, boxMaterial);
+
+    obj.add(box);
 }
 
-function createChassis() {
+function createModel(obj) {
+    var vertices = [
+        new THREE.Vector3(0, 100, 0),
+        new THREE.Vector3(100, 100, 0),
+        new THREE.Vector3(-100, 100, 0)
+    ];
 
+    var faces = [
+        new THREE.Face3(0, 2, 1)
+    ];
+
+    var geom = new THREE.Geometry();
+    geom.vertices = vertices;
+    geom.faces = faces;
+    geom.computeFaceNormals();
+
+    var material = new THREE.MeshBasicMaterial({color: 0x33FF99});
+
+
+    var mesh = new THREE.SceneUtils.createMultiMaterialObject(geom, material);
+
+    obj.add(mesh);
 }
 
 function createWheel(x, y, z) {
@@ -42,6 +62,19 @@ function createDisplayStand() {
 
 function createSpotlight(x, y, z) {
 
+}
+
+/**
+ Creates the whole Structure
+ */
+function createStructure() {
+    var cyberTruck = new THREE.Object3D();
+
+    createChassis(cyberTruck);
+
+    //createModel(cyberTruck);
+
+    scene.add(cyberTruck);
 }
 
 /**
@@ -109,10 +142,10 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.x = 200;
-    camera.position.y = 200;
-    camera.position.z = 200;
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.x = 500;
+    camera.position.y = 500;
+    camera.position.z = 500;
     camera.lookAt(scene.position);
 
     var axes = new THREE.AxesHelper(20);
