@@ -54,6 +54,7 @@ class Spotlight {
         //Creating the light
         this.light = new THREE.SpotLight(0xffffff);
         this.light.angle = Math.PI / 3;
+        this.light.intensity = 0.5;
 
         //Getting the rotation needed to make the spolight face the middle
 
@@ -173,39 +174,39 @@ class GlassBreakingBall {
         var newPosition = this.ball.position.clone();
         newPosition.y = this.radius;
 
-        this.setPosition(newPosition); //Poorly done on purpose
+        this.setPosition(newPosition); //Position rollback poorly done on purpose
     }
 
     update() {
-        //Updating position and velocity
-        var newPosition = new THREE.Vector3();
+        if(this.velocity.length() >= 0.1 || this.ball.position.y > 3) {
+            //Updating position and velocity
+            var newPosition = new THREE.Vector3();
 
-        newPosition.x = this.ball.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
-        newPosition.y = this.ball.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
-        newPosition.z = this.ball.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+            newPosition.x = this.ball.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+            newPosition.y = this.ball.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+            newPosition.z = this.ball.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
 
-        var newVelocity = new THREE.Vector3();
+            var newVelocity = new THREE.Vector3();
 
-        newVelocity.x = this.velocity.x + delta * this.acceleration.x;
-        newVelocity.y = this.velocity.y + delta * this.acceleration.y;
-        newVelocity.z = this.velocity.z + delta * this.acceleration.z;
+            newVelocity.x = this.velocity.x + delta * this.acceleration.x;
+            newVelocity.y = this.velocity.y + delta * this.acceleration.y;
+            newVelocity.z = this.velocity.z + delta * this.acceleration.z;
 
-        this.setPosition(newPosition);
-        this.velocity = newVelocity;
+            this.setPosition(newPosition);
+            this.velocity = newVelocity;
 
-        if(this.velocity.x + this.velocity.z < 0.1) {
-            if(this.velocity.length() < 0.01) {
-                //Velocity too small. Make it stand still
-                this.velocity = new THREE.Vector3();
-                this.acceleration = new THREE.Vector3();
+            if(this.velocity.x + this.velocity.z < 0.1) {
+                if(this.velocity.length() < 0.01) {
+                    //Velocity too small. Make it stand still
+                    this.velocity = new THREE.Vector3();
+                    this.acceleration = new THREE.Vector3();
+                }
+                else if (this.hitTarget) {
+                    this.velocity.x = 0;
+                    this.velocity.z = 0;
+                }            
             }
-            else if (this.hitTarget) {
-                this.velocity.x = 0;
-                this.velocity.z = 0;
-            }            
-        }
 
-        if(this.velocity.length() >= 0.1) {
             this.checkCollision();
         }
     }
@@ -527,7 +528,7 @@ function createSpotlight(x, y, z) {
 
 function createDirectionalLight() {
     directionalLight = new THREE.DirectionalLight(0xffffff);
-
+    directionalLight.intensity = 0.5;
     scene.add(directionalLight);
 }
 
