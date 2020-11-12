@@ -374,14 +374,16 @@ function createChassis(obj) {
     var boxGeometry = new THREE.BoxGeometry(380, 15, 170);
     var box = new THREE.Mesh(boxGeometry, boxMaterial);
 
+    box.position.set(0, 32, 0);
+
     //Left front wheel
-    var wheel1 = createWheel(-190, 0, 85);
+    var wheel1 = createWheel(-190, 32, 85);
     //Right front wheel
-    var wheel2 = createWheel(-190, 0, -85);
+    var wheel2 = createWheel(-190, 32, -85);
     //Left back wheel
-    var wheel3 = createWheel(190, 0, 85);
+    var wheel3 = createWheel(190, 32, 85);
     //Right back wheel
-    var wheel4 = createWheel(190, 0, -85);
+    var wheel4 = createWheel(190, 32, -85);
 
     allMeshes.push(box);
 
@@ -410,15 +412,52 @@ function createModel(obj) {
         new THREE.Vector3(-254, 32, 80), //13
         new THREE.Vector3(-283, 53, -52), //14
         new THREE.Vector3(-283, 53, 52), //15
+
+        new THREE.Vector3(-185, 127, 75), //ws_0 (16)
+        new THREE.Vector3(-185, 127, -75), //ws_1 (17)
+        new THREE.Vector3(-20, 190, 65), //ws_2 (18)
+        new THREE.Vector3(-20, 190, -65), //ws_3 (19)
+
+        new THREE.Vector3(-210, 110, 87), //sw_0 (20)
+        new THREE.Vector3(-16, 180, 71), //sw_1 (21)
+        new THREE.Vector3(80, 165, 75), //sw_2 (22)
+        new THREE.Vector3(80, 130, 83), //sw_3 (23)
+
+        new THREE.Vector3(-210, 110, -87), //sw_4 (24)
+        new THREE.Vector3(-16, 180, -71), //sw_5 (25)
+        new THREE.Vector3(80, 165, -75), //sw_6 (26)
+        new THREE.Vector3(80, 130, -83), //sw_7 (27)
+
     ];
 
     var faces = [
         new THREE.Face3(0, 1, 2),
         new THREE.Face3(2, 1, 3),
-        new THREE.Face3(0, 7, 1),
-        new THREE.Face3(7, 6, 1),
-        new THREE.Face3(0, 5, 7),
-        new THREE.Face3(4, 1, 6),
+        new THREE.Face3(0, 16, 1),
+        new THREE.Face3(16, 17, 1),
+        new THREE.Face3(0, 7, 18),
+        new THREE.Face3(18, 16, 0),
+        new THREE.Face3(17, 19, 6),
+        new THREE.Face3(6, 1, 17),
+        new THREE.Face3(18, 7, 6),
+        new THREE.Face3(6, 19, 18),
+
+        new THREE.Face3(0, 20, 7),
+        new THREE.Face3(20, 21, 7),
+        new THREE.Face3(0, 5, 20),
+        new THREE.Face3(23, 20, 5),
+        new THREE.Face3(5, 22, 23),
+        new THREE.Face3(5, 7, 22),
+        new THREE.Face3(22, 7, 21),
+
+        new THREE.Face3(24, 1, 6),
+        new THREE.Face3(25, 24, 6),
+        new THREE.Face3(26, 25, 6),
+        new THREE.Face3(4, 26, 6),
+        new THREE.Face3(4, 27, 26),
+        new THREE.Face3(4, 1, 27),
+        new THREE.Face3(27, 1, 24),
+        
         new THREE.Face3(5, 6, 7),
         new THREE.Face3(5, 4, 6),
         new THREE.Face3(0, 9, 5),
@@ -452,7 +491,7 @@ function createModel(obj) {
     geom.faces = faces;
     geom.computeFaceNormals();
 
-    var material = new THREE.MeshBasicMaterial({color: 0xc0c0c0});
+    var material = new THREE.MeshBasicMaterial({color: 0xc0c0c0, wireframe: false});
 
     var mesh = new THREE.Mesh(geom, material);
 
@@ -462,8 +501,8 @@ function createModel(obj) {
 }
 
 function createWheel(x, y, z) {
-    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0xFF8000});
-    var wheelGeometry = new THREE.CylinderGeometry(64, 64, 30, 50);
+    var wheelMaterial = new THREE.MeshBasicMaterial({color: 0x202020});
+    var wheelGeometry = new THREE.CylinderGeometry(50, 50, 30, 50);
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
     wheelMesh.rotation.x = Math.PI * 0.5;
@@ -471,6 +510,32 @@ function createWheel(x, y, z) {
     allMeshes.push(wheelMesh);
 
     return wheelMesh;
+}
+
+function createWindshield(obj) {
+    var vertices = [
+        new THREE.Vector3(-185, 127, 75), //ws_0 (16)
+        new THREE.Vector3(-185, 127, -75), //ws_1 (17)
+        new THREE.Vector3(-20, 190, 65), //ws_2 (18)
+        new THREE.Vector3(-20, 190, -65), //ws_3 (19)
+    ];
+
+    var faces = [
+        new THREE.Face3(0, 2, 1),
+        new THREE.Face3(1, 2, 3),
+    ];
+
+    var geom = new THREE.Geometry();
+    geom.vertices = vertices;
+    geom.faces = faces;
+    geom.computeFaceNormals();
+
+    var material = new THREE.MeshBasicMaterial({color: 0x000000, wireframe: false});
+    var mesh = new THREE.Mesh(geom, material);
+
+    obj.add(mesh);
+
+    allMeshes.push(mesh);
 }
 
 function createGround(obj){
@@ -485,12 +550,37 @@ function createGround(obj){
 }
 
 
-function createWindshield(x, y, z) {
+function createSideWindows(obj) {
+    var vertices = [
+        new THREE.Vector3(-210, 110, 87), //sw_0
+        new THREE.Vector3(-16, 180, 71), //sw_1
+        new THREE.Vector3(80, 165, 75), //sw_2 
+        new THREE.Vector3(80, 130, 83), //sw_3 
 
-}
+        new THREE.Vector3(-210, 110, -87), //sw_4
+        new THREE.Vector3(-16, 180, -71), //sw_5
+        new THREE.Vector3(80, 165, -75), //sw_6
+        new THREE.Vector3(80, 130, -83), //sw_7
+    ];
 
-function createFrontWindow(x, y, z) {
+    var faces = [
+        new THREE.Face3(0, 3, 1),
+        new THREE.Face3(3, 2, 1),
 
+        new THREE.Face3(7, 4, 5),
+        new THREE.Face3(7, 5, 6),
+    ];
+
+    var geom = new THREE.Geometry();
+    geom.vertices = vertices;
+    geom.faces = faces;
+    geom.computeFaceNormals();
+
+    var material = new THREE.MeshBasicMaterial({color: 0x000000, wireframe: false});
+
+    var mesh = new THREE.Mesh(geom, material);
+
+    obj.add(mesh);
 }
 
 /**
@@ -511,12 +601,17 @@ function createStructure() {
 
     createPodium(podium);
     createChassis(cyberTruck);
+    createModel(cyberTruck);
+    createWindshield(cyberTruck);
+    createSideWindows(cyberTruck);
+
+    cyberTruck.position.set(0, -46, 0);
+
     createGround(ground);
 
     wholeStructure.add(podium);
     wholeStructure.add(cyberTruck); 
 
-    //createModel(cyberTruck);
     scene.add(ground);
     scene.add(wholeStructure);
 
@@ -629,7 +724,7 @@ function init() {
 
     camera = perspCam;
     camera.position.x = 0;
-    camera.position.y = 100;
+    camera.position.y = 500;
     camera.position.z = 500;
     camera.lookAt(scene.position);
 
