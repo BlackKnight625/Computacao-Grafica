@@ -20,6 +20,11 @@ var windowBroken = false;
 var glassShatteringBalls = [];
 var glassShards = [];
 
+var ortCam = new THREE.OrthographicCamera(window.innerWidth / - 4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / - 4,
+    -200, 500);
+
+var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
 /*----------Classes---------*/
 class Spotlight {
     light;
@@ -595,6 +600,20 @@ function addKeyActions() {
 
     pressedKeyActions[32] = function () {spawnGlassShatteringBall()} // Spacebar
 
+    //Camera settings
+    //You pressed 4
+    pressedKeyActions[52] = function () {
+        camera = perspCam;
+        camera.position.set(550, 250, 550);
+        camera.lookAt(scene.position);
+    }
+    //You pressed 5
+    pressedKeyActions[53] = function () {
+        camera = ortCam;
+        camera.position.set(0, 0, 300);
+        camera.lookAt(scene.position);
+    }
+
 }
 
 /**
@@ -607,8 +626,7 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2,
-        -2000, 2000);
+    camera = perspCam;
     camera.position.x = 0;
     camera.position.y = 100;
     camera.position.z = 500;
