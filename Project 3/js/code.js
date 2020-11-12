@@ -98,7 +98,7 @@ class GlassBreakingBall {
     constructor(startingPosition, velocity, xLimit) {
         this.radius = 5;
 
-        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x999999});
+        var sphereMaterial = new currentGlobalMaterialClass({color: 0x999999});
         this.ball = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 32, 32), sphereMaterial);
         this.setPosition(startingPosition);
 
@@ -143,7 +143,7 @@ class GlassBreakingBall {
         this.hitTarget = true;
         this.shatterAudio.play();
 
-        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -98, this.velocity.z * 0.05);
+        this.acceleration = new THREE.Vector3(this.velocity.x * 0.05, -500, this.velocity.z * 0.05);
         this.velocity.multiplyScalar(-0.9);
     }
 
@@ -195,19 +195,6 @@ class GlassBreakingBall {
 
 /*----------Methods---------*/
 
-/**
- Creates the whole Structure
- */
-function createStructure() {
-    var cyberTruck = new THREE.Object3D();
-
-    createChassis(cyberTruck);
-
-    //createModel(cyberTruck);
-
-    scene.add(cyberTruck);
-}
-
 function createPodium(obj){
     
     var podiumMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
@@ -215,6 +202,7 @@ function createPodium(obj){
     podium = new THREE.Mesh(podiumGeometry, podiumMaterial);
     podium.position.set(0, -114, 0);
 
+    allMeshes.push(podium);
     obj.add(podium);
 }
 
@@ -233,6 +221,7 @@ function createChassis(obj) {
     //Right back wheel
     var wheel4 = createWheel(190, 0, -85);
 
+    allMeshes.push(box);
 
     obj.add(wheel1);
     obj.add(wheel2);
@@ -244,13 +233,57 @@ function createChassis(obj) {
 
 function createModel(obj) {
     var vertices = [
-        new THREE.Vector3(0, 100, 0),
-        new THREE.Vector3(100, 100, 0),
-        new THREE.Vector3(-100, 100, 0)
+        new THREE.Vector3(-254, 100, 90), //0
+        new THREE.Vector3(-254, 100, -90), //1
+        new THREE.Vector3(-286, 90, 52), //2
+        new THREE.Vector3(-286, 90, -52), //3
+        new THREE.Vector3(301, 127, -90), //4
+        new THREE.Vector3(301, 127, 90), //5
+        new THREE.Vector3(-16, 190, -69), //6
+        new THREE.Vector3(-16, 190, 69), //7
+        new THREE.Vector3(295, 53, -85), //8
+        new THREE.Vector3(295, 53, 85), //9
+        new THREE.Vector3(254, 32, -80), //10
+        new THREE.Vector3(254, 32, 80), //11
+        new THREE.Vector3(-254, 32, -80), //12
+        new THREE.Vector3(-254, 32, 80), //13
+        new THREE.Vector3(-283, 53, -52), //14
+        new THREE.Vector3(-283, 53, 52), //15
     ];
 
     var faces = [
-        new THREE.Face3(0, 2, 1)
+        new THREE.Face3(0, 1, 2),
+        new THREE.Face3(2, 1, 3),
+        new THREE.Face3(0, 7, 1),
+        new THREE.Face3(7, 6, 1),
+        new THREE.Face3(0, 5, 7),
+        new THREE.Face3(4, 1, 6),
+        new THREE.Face3(5, 6, 7),
+        new THREE.Face3(5, 4, 6),
+        new THREE.Face3(0, 9, 5),
+        new THREE.Face3(1, 4, 8),
+        new THREE.Face3(11, 9, 5),
+        new THREE.Face3(10, 4, 8),
+        new THREE.Face3(2, 15, 13),
+        new THREE.Face3(13, 0, 2),
+        new THREE.Face3(1, 14, 3),
+        new THREE.Face3(1, 12, 14),
+        new THREE.Face3(13, 11, 5),
+        new THREE.Face3(12, 4, 10),
+        new THREE.Face3(13, 5, 0),
+        new THREE.Face3(1, 4, 12),
+        new THREE.Face3(5, 9, 4),
+        new THREE.Face3(9, 8, 4),
+        new THREE.Face3(9, 11, 8),
+        new THREE.Face3(11, 10, 8),
+        new THREE.Face3(3, 14, 2),
+        new THREE.Face3(14, 15, 2),
+        new THREE.Face3(14, 12, 15),
+        new THREE.Face3(12, 13, 15),
+        new THREE.Face3(14, 12, 15),
+        new THREE.Face3(12, 13, 15),
+        new THREE.Face3(11, 13, 12),
+        new THREE.Face3(12, 10, 11),
     ];
 
     var geom = new THREE.Geometry();
@@ -258,10 +291,11 @@ function createModel(obj) {
     geom.faces = faces;
     geom.computeFaceNormals();
 
-    var material = new THREE.MeshBasicMaterial({color: 0x33FF99});
+    var material = new THREE.MeshBasicMaterial({color: 0xc0c0c0});
 
+    var mesh = new THREE.Mesh(geom, material);
 
-    var mesh = new THREE.SceneUtils.createMultiMaterialObject(geom, material);
+    allMeshes.push(mesh);
 
     obj.add(mesh);
 }
@@ -272,6 +306,8 @@ function createWheel(x, y, z) {
     var wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
     wheelMesh.position.set(x,y,z);
     wheelMesh.rotation.x = Math.PI * 0.5;
+
+    allMeshes.push(wheelMesh);
 
     return wheelMesh;
 }
@@ -292,10 +328,6 @@ function createBackWindow(x, y, z) {
 
 }
 
-function createSpotlight(x, y, z) {
-    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
-}
-
 /**
  Creates the whole Structure
  */
@@ -309,11 +341,10 @@ function createStructure() {
     //createModel(cyberTruck);
     scene.add(cyberTruck);
     scene.add(podium);
+}
 
-    scene.traverse(function (node) {
-        console.log(node);
-    });
-    
+function createSpotlight(x, y, z) {
+    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
 }
 
 function createDirectionalLight() {
@@ -399,9 +430,10 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.x = 500;
-    camera.position.y = 500;
+    camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2,
+        -2000, 2000);
+    camera.position.x = 0;
+    camera.position.y = 100;
     camera.position.z = 500;
     camera.lookAt(scene.position);
 
@@ -414,9 +446,9 @@ function init() {
     createDirectionalLight();
 
     //Creating spotlights
-    createSpotlight(100, 100, 100);
-    createSpotlight(0, 100, -150);
-    createSpotlight(-100, 100, 100);
+    createSpotlight(300, 300, 300);
+    createSpotlight(0, 300, -450);
+    createSpotlight(-300, 300, 300);
 
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
@@ -501,10 +533,11 @@ function toggleGouraudPhong() {
 }
 
 function spawnGlassShatteringBall() {
-    var deviation = new THREE.Vector3().random().multiplyScalar(2);
+    var deviation = new THREE.Vector3().random().multiplyScalar(3);
+    var extraSpeed = 30 * (Math.random() - 0.5);
 
     var position = new THREE.Vector3(300, 300, 300);
-    var velocity = new THREE.Vector3(-60, 0, 0);
+    var velocity = new THREE.Vector3(-80 + extraSpeed, 0, 0);
 
     velocity.add(deviation);
 
