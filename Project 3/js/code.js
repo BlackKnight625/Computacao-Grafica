@@ -14,27 +14,29 @@ class Spotlight {
     light;
     structure;
     on;
+    cylinder;
 
     constructor(x, y, z, targetX, targetY, targetZ) {
         this.structure = new THREE.Object3D();
 
-        var cylHeight = 5;
-        var cylTranslationUp = 2.5;
+        var cylHeight = 25;
+        var cylTranslationUp = 20;
 
         //Creating the sphere and cylinder for the spotlight
-        var material = new THREE.MeshBasicMaterial({color: 0xFFFDFD});
-        var sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), material);
-        var cylinder = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, cylHeight, 32), material);
+        var sphereMaterial = new THREE.MeshPhongMaterial({color: 0x550000});
+        var cylinderMaterial = new THREE.MeshPhongMaterial({color: 0x551100});
+        var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 32), sphereMaterial);
+        this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, cylHeight, 32), cylinderMaterial);
 
-        cylinder.position.set(0, cylTranslationUp, 0);
+        this.cylinder.position.set(0, cylTranslationUp, 0);
 
         this.structure.add(sphere);
-        this.structure.add(cylinder);
+        this.structure.add(this.cylinder);
 
         //Creating the light
-        this.light = THREE.SpotLight(0xffffff);
+        this.light = new THREE.SpotLight(0xffffff);
         this.light.castShadow = true;
-        this.light.angle = Math.PI / 4;
+        this.light.angle = Math.PI / 3;
 
         //Getting the rotation needed to make the spolight face the middle
 
@@ -44,25 +46,36 @@ class Spotlight {
         var direction = new THREE.Vector3(0, 1, 0);
 
         var rotationAxis = toMiddle.clone().cross(direction);
-        var angle = toMiddle.angleTo(direction);
+        var angle = -toMiddle.angleTo(direction);
 
         //Making the spotlight face the middle
         this.structure.rotateOnWorldAxis(rotationAxis, angle);
+        this.structure.position.set(x, y, z);
 
         var aux = cylHeight + cylTranslationUp;
         this.light.position.set(x + toMiddle.x * aux, y + toMiddle.y * aux, z + toMiddle.z * aux);
 
         this.on = false;
+
+        scene.add(this.structure);
     }
 
     flickerLight() {
+        var colorModification = new THREE.Color(0x002200);
+
         if(this.on) {
             //Light is on. Remove it
-            scene.remove(light);
+            scene.remove(this.light);
+            
+            //Making the spotlight's head less yellow
+            this.cylinder.material.color.sub(colorModification);
         }
         else {
             //Light is off. Light it up
-            scene.add(light);
+            scene.add(this.light);
+
+            //Making the spotlight's head more yellow
+            this.cylinder.material.color.add(colorModification);
         }
 
         this.on = !this.on;
@@ -80,6 +93,17 @@ class Spotlight {
  */
 function createStructure() {
     
+
+    //Temporary
+    var material = new THREE.MeshPhongMaterial({color: 0x555555});
+    var sphere = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 32), material);
+
+    scene.add(sphere);
+
+    //Creating spotlights
+    createSpotlight(100, 100, 100);
+    createSpotlight(0, 100, -150);
+    createSpotlight(-100, 100, 100);
 }
 
 function createChassis() {
@@ -110,7 +134,7 @@ function createDisplayStand() {
 }
 
 function createSpotlight(x, y, z) {
-
+    spotlights.push(new Spotlight(x, y, z, 0, 0, 0));
 }
 
 /**
@@ -165,7 +189,9 @@ function display() {
 }
 
 function addKeyActions() {
-
+    pressedKeyActions[49] = function () {spotlights[0].flickerLight()}; //1
+    pressedKeyActions[50] = function () {spotlights[1].flickerLight()}; //2
+    pressedKeyActions[51] = function () {spotlights[2].flickerLight()}; //3
 }
 
 /**
