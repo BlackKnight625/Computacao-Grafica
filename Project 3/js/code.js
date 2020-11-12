@@ -6,7 +6,9 @@ var delta;
 var clock = new THREE.Clock();
 
 var spotlights = [];
-
+var allMeshes = [];
+var basicMaterialToggleClass = THREE.MeshBasicMaterial;
+var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
 
 /*----------Classes---------*/
 class Spotlight {
@@ -21,10 +23,12 @@ class Spotlight {
         var coneTranslationUp = 20;
 
         //Creating the sphere and cylinder for the spotlight
-        var sphereMaterial = new THREE.MeshPhongMaterial({color: 0x550000});
-        var coneMaterial = new THREE.MeshPhongMaterial({color: 0x551100});
+        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x550000});
+        var coneMaterial = new THREE.MeshBasicMaterial({color: 0x551100});
         var sphere = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 32), sphereMaterial);
         this.cone = new THREE.Mesh(new THREE.ConeGeometry(10, coneHeight, 32), coneMaterial);
+
+        allMeshes.push(sphere, this.cone);
 
         this.cone.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), Math.PI);
         this.cone.position.set(0, coneTranslationUp, 0);
@@ -214,6 +218,11 @@ function addKeyActions() {
     pressedKeyActions[49] = function () {spotlights[0].flickerLight()}; //1
     pressedKeyActions[50] = function () {spotlights[1].flickerLight()}; //2
     pressedKeyActions[51] = function () {spotlights[2].flickerLight()}; //3
+
+    pressedKeyActions[87] = function () {switchBasicMaterials()} //W
+    pressedKeyActions[119] = function () {switchBasicMaterials()} //w
+    pressedKeyActions[69] = function () {toggleGouraudPhong()} //E
+    pressedKeyActions[101] = function () {toggleGouraudPhong()} //e
 }
 
 /**
@@ -267,4 +276,46 @@ function update() {
             delete pressedKeys[key];
         }
     }
+}
+
+function replaceEveryonesMaterials() {
+    //Switching all mesh's materials with the current global one
+    for(var mesh of allMeshes) {
+        mesh.material = new currentGlobalMaterialClass({color: mesh.material.color.getHex()});
+    }
+}
+
+function switchBasicMaterials() {
+    if(currentGlobalMaterialClass != THREE.MeshBasicMaterial) {
+        //Time to turn every Mesh into a Basic one
+        basicMaterialToggleClass = currentGlobalMaterialClass;
+        currentGlobalMaterialClass = THREE.MeshBasicMaterial;
+
+        replaceEveryonesMaterials();
+    }
+    else {
+        if(basicMaterialToggleClass != THREE.MeshBasicMaterial) {
+            //Time to turn every Mesh back to their original material
+            currentGlobalMaterialClass = basicMaterialToggleClass;
+
+            replaceEveryonesMaterials();
+        }
+    }
+}
+
+function toggleGouraudPhong() {
+    if(currentGlobalMaterialClass != THREE.MeshBasicMaterial) {
+        if(currentGlobalMaterialClass == THREE.MeshPhongMaterial) {
+            currentGlobalMaterialClass = THREE.MeshLambertMaterial;
+        }
+        else {
+            currentGlobalMaterialClass = THREE.MeshPhongMaterial;
+        }
+    }
+    else {
+        //Current material is basic. Defaulting to Phong
+        currentGlobalMaterialClass = THREE.MeshPhongMaterial;
+    }
+
+    replaceEveryonesMaterials();
 }
