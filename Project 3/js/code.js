@@ -842,10 +842,13 @@ function spawnGlassShatteringBall() {
 
     var position = new THREE.Vector3(-50, 90, 500);
     var velocity = new THREE.Vector3(0, 0, -80 + extraSpeed);
-    var angle = wholeStructure.rotation.y;
+    var angle = wholeStructure.rotation.y * Math.abs(wholeStructure.rotation.x) / wholeStructure.rotation.x;
 
-    rotateAroundAxis(position, new THREE.Vector3(0, 1, 0), angle);
-    rotateAroundAxis(velocity, new THREE.Vector3(0, 1, 0), angle);
+    var matrix = new THREE.Matrix4();
+    matrix.makeRotationFromEuler(wholeStructure.rotation);
+
+    position.applyMatrix4(matrix);
+    velocity.applyMatrix4(matrix);
 
     var collisionPoint = position.clone().add(velocity.clone().normalize().multiplyScalar(distanceFromBallToWindow));
 
