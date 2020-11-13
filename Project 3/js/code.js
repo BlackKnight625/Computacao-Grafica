@@ -4,7 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
-var gravity = new THREE.Vector3(0, -500, 0);
+var gravity = new THREE.Vector3(0, -400, 0);
 
 
 var angleSpeed = 0.25; //0.25 spins per second
@@ -14,16 +14,18 @@ var spotlights = [];
 var allMeshes = [];
 var basicMaterialToggleClass = THREE.MeshBasicMaterial;
 var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
+var floorY = -64;
+var distanceFromBallToWindow = 420;
 
 //Glass shatering related
 var windowBroken = false;
 var glassShatteringBalls = [];
 var glassShards = [];
 
-var ortCam = new THREE.OrthographicCamera(window.innerWidth / - 4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / - 4,
-    -200, 500);
+var ortCam = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
+    -2000, 2000);
 
-var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
 
 /*----------Classes---------*/
 class Spotlight {
@@ -54,6 +56,7 @@ class Spotlight {
         //Creating the light
         this.light = new THREE.SpotLight(0xffffff);
         this.light.angle = Math.PI / 3;
+        this.light.intensity = 0.5;
 
         //Getting the rotation needed to make the spolight face the middle
 
@@ -62,7 +65,7 @@ class Spotlight {
         //Vector that points at the direction the spotlight is facing
         var direction = new THREE.Vector3(0, 1, 0);
 
-        var rotationAxis = toMiddle.clone().cross(direction);
+        var rotationAxis = toMiddle.clone().cross(direction).normalize();
         var angle = -toMiddle.angleTo(direction);
 
         //Making the spotlight face the middle
@@ -79,7 +82,7 @@ class Spotlight {
     }
 
     flickerLight() {
-        var colorModification = new THREE.Color(0x002200);
+        var colorModification = new THREE.Color(0x005500);
 
         if(this.light.visible) {
             //Making the spotlight's head less yellow
@@ -97,21 +100,22 @@ class Spotlight {
 class GlassBreakingBall {
     hitTarget = false;
     ball;
-    xLimit;
+    collisionPoint;
     acceleration;
     velocity;
     radius;
     shatterAudio;
     hitAudioVolume;
+    bounces = 0;
 
-    constructor(startingPosition, velocity, xLimit) {
+    constructor(startingPosition, velocity, collisionPoint) {
         this.radius = 5;
+        this.collisionPoint = collisionPoint;
 
         var sphereMaterial = new currentGlobalMaterialClass({color: 0x999999});
         this.ball = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 32, 32), sphereMaterial);
         this.setPosition(startingPosition);
 
-        this.xLimit = xLimit;
         this.velocity = velocity;
         this.acceleration =  new THREE.Vector3(0, 0, 0);
 
@@ -133,16 +137,16 @@ class GlassBreakingBall {
 
         if(this.hitTarget) {
             //The window has already been broken. Checking for collisions with the floor
-            if(this.ball.position.y - this.radius < 0) {
+            if(this.ball.position.y - this.radius < floorY) {
                 this.dealWithFloorCollision();
             }
         }
         else {
             //The ball is still moving towards the window. Checking for window collisions
-            var ballToXPlane = new THREE.Vector3(this.xLimit - this.ball.position.x, 0, 0);
+            var ballToWindow = this.collisionPoint.clone().sub(this.ball.position);
 
-            if(ballToXPlane.dot(this.velocity) < 0) {
-                //Ball surpassed the x plane
+            if(ballToWindow.dot(this.velocity) < 0) {
+                //Ball surpassed the window
                 this.dealWithWindowCollision();
             }
         }
@@ -171,42 +175,47 @@ class GlassBreakingBall {
         this.hitAudioVolume *= 0.7;
 
         var newPosition = this.ball.position.clone();
-        newPosition.y = this.radius;
+        newPosition.y = this.radius + floorY;
 
-        this.setPosition(newPosition); //Poorly done on purpose
+        this.setPosition(newPosition); //Position rollback poorly done on purpose
+
+        this.bounces++;
     }
 
     update() {
-        //Updating position and velocity
-        var newPosition = new THREE.Vector3();
+        if(this.bounces <= 30 && (this.velocity.length() >= 0.1 || this.ball.position.y > 3 + floorY)) {
+            //Updating position and velocity
+            var newPosition = new THREE.Vector3();
 
-        newPosition.x = this.ball.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
-        newPosition.y = this.ball.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
-        newPosition.z = this.ball.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
+            newPosition.x = this.ball.position.x + delta * this.velocity.x + 0.5 * delta * delta * this.acceleration.x;
+            newPosition.y = this.ball.position.y + delta * this.velocity.y + 0.5 * delta * delta * this.acceleration.y;
+            newPosition.z = this.ball.position.z + delta * this.velocity.z + 0.5 * delta * delta * this.acceleration.z;
 
-        var newVelocity = new THREE.Vector3();
+            var newVelocity = new THREE.Vector3();
 
-        newVelocity.x = this.velocity.x + delta * this.acceleration.x;
-        newVelocity.y = this.velocity.y + delta * this.acceleration.y;
-        newVelocity.z = this.velocity.z + delta * this.acceleration.z;
+            newVelocity.x = this.velocity.x + delta * this.acceleration.x;
+            newVelocity.y = this.velocity.y + delta * this.acceleration.y;
+            newVelocity.z = this.velocity.z + delta * this.acceleration.z;
 
-        this.setPosition(newPosition);
-        this.velocity = newVelocity;
+            this.setPosition(newPosition);
+            this.velocity = newVelocity;
 
-        if(this.velocity.x + this.velocity.z < 0.1) {
-            if(this.velocity.length() < 0.01) {
-                //Velocity too small. Make it stand still
-                this.velocity = new THREE.Vector3();
-                this.acceleration = new THREE.Vector3();
+            if(this.velocity.x + this.velocity.z < 0.1) {
+                if(this.velocity.length() < 0.01) {
+                    //Velocity too small. Make it stand still
+                    this.velocity = new THREE.Vector3();
+                    this.acceleration = new THREE.Vector3();
+                }
+                else if (this.hitTarget) {
+                    this.velocity.x = 0;
+                    this.velocity.z = 0;
+                }            
             }
-            else if (this.hitTarget) {
-                this.velocity.x = 0;
-                this.velocity.z = 0;
-            }            
-        }
 
-        if(this.velocity.length() >= 0.1) {
             this.checkCollision();
+        }
+        else {
+            this.stopped = true;
         }
     }
 }
@@ -298,7 +307,7 @@ class GlassShard {
 
     checkFloorCollision() {
         //Checking for collisions with the floor
-        if(this.shard.position.y < 0) {
+        if(this.shard.position.y < floorY) {
             this.dealWithFloorCollision();
         }
     }
@@ -570,7 +579,7 @@ function createGround(obj){
 }
 
 
-function createSideWindows(obj) {
+function createSideWindows(obj) {//
     var vertices = [
         new THREE.Vector3(-210, 110, 87), //sw_0
         new THREE.Vector3(-16, 180, 71), //sw_1
@@ -701,7 +710,7 @@ function createSpotlight(x, y, z) {
 
 function createDirectionalLight() {
     directionalLight = new THREE.DirectionalLight(0xffffff);
-
+    directionalLight.intensity = 0.5;
     scene.add(directionalLight);
 }
 
@@ -778,7 +787,7 @@ function addKeyActions() {
     //You pressed 4
     pressedKeyActions[52] = function () {
         camera = perspCam;
-        camera.position.set(550, 250, 550);
+        camera.position.set(750, 250, 750);
         camera.lookAt(scene.position);
     }
     //You pressed 5
@@ -907,15 +916,21 @@ function toggleGouraudPhong() {
 }
 
 function spawnGlassShatteringBall() {
-    var deviation = new THREE.Vector3().random().multiplyScalar(3);
+    var deviation = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(4);
     var extraSpeed = 30 * (Math.random() - 0.5);
 
-    var position = new THREE.Vector3(300, 300, 300);
-    var velocity = new THREE.Vector3(-80 + extraSpeed, 0, 0);
+    var position = new THREE.Vector3(-50, 90, 500);
+    var velocity = new THREE.Vector3(0, 0, -80 + extraSpeed);
+    var angle = wholeStructure.rotation.y;
+
+    rotateAroundAxis(position, new THREE.Vector3(0, 1, 0), angle);
+    rotateAroundAxis(velocity, new THREE.Vector3(0, 1, 0), angle);
+
+    var collisionPoint = position.clone().add(velocity.clone().normalize().multiplyScalar(distanceFromBallToWindow));
 
     velocity.add(deviation);
 
-    new GlassBreakingBall(position, velocity, 0);
+    new GlassBreakingBall(position, velocity, collisionPoint);
 }
 
 function ballCollidedWithWindow(position, direction) {
