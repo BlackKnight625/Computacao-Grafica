@@ -4,7 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
-var gravity = new THREE.Vector3(0, -500, 0);
+var gravity = new THREE.Vector3(0, -400, 0);
 
 
 var angleSpeed = 0.25; //0.25 spins per second
@@ -106,6 +106,7 @@ class GlassBreakingBall {
     radius;
     shatterAudio;
     hitAudioVolume;
+    bounces = 0;
 
     constructor(startingPosition, velocity, collisionPoint) {
         this.radius = 5;
@@ -177,10 +178,12 @@ class GlassBreakingBall {
         newPosition.y = this.radius + floorY;
 
         this.setPosition(newPosition); //Position rollback poorly done on purpose
+
+        this.bounces++;
     }
 
     update() {
-        if(this.velocity.length() >= 0.1 || this.ball.position.y > 3 + floorY) {
+        if(this.bounces <= 30 && (this.velocity.length() >= 0.1 || this.ball.position.y > 3 + floorY)) {
             //Updating position and velocity
             var newPosition = new THREE.Vector3();
 
@@ -210,6 +213,9 @@ class GlassBreakingBall {
             }
 
             this.checkCollision();
+        }
+        else {
+            this.stopped = true;
         }
     }
 }
