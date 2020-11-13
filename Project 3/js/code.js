@@ -65,7 +65,7 @@ class Spotlight {
         //Vector that points at the direction the spotlight is facing
         var direction = new THREE.Vector3(0, 1, 0);
 
-        var rotationAxis = toMiddle.clone().cross(direction);
+        var rotationAxis = toMiddle.clone().cross(direction).normalize();
         var angle = -toMiddle.angleTo(direction);
 
         //Making the spotlight face the middle
@@ -82,7 +82,7 @@ class Spotlight {
     }
 
     flickerLight() {
-        var colorModification = new THREE.Color(0x002200);
+        var colorModification = new THREE.Color(0x005500);
 
         if(this.light.visible) {
             //Making the spotlight's head less yellow
