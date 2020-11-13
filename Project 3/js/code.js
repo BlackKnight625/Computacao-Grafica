@@ -718,7 +718,20 @@ function createDirectionalLight() {
  * Called when the window is resized
  */
 function onResize() {
+    'use strict';
 
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        perspCam.aspect = window.innerWidth / window.innerHeight;
+        perspCam.updateProjectionMatrix();
+
+        ortCam.left = window.innerWidth / - 2;
+        ortCam.right = window.innerWidth / 2;
+        ortCam.top = window.innerHeight / 2;
+        ortCam.bottom = window.innerHeight / - 2;
+        ortCam.updateProjectionMatrix();
+    }
 }
 
 /**
