@@ -14,6 +14,8 @@ var spotlights = [];
 var allMeshes = [];
 var basicMaterialToggleClass = THREE.MeshBasicMaterial;
 var currentGlobalMaterialClass = THREE.MeshBasicMaterial;
+var floorY = -64;
+var distanceFromBallToWindow = 420;
 
 //Glass shatering related
 var windowBroken = false;
@@ -98,21 +100,21 @@ class Spotlight {
 class GlassBreakingBall {
     hitTarget = false;
     ball;
-    xLimit;
+    collisionPoint;
     acceleration;
     velocity;
     radius;
     shatterAudio;
     hitAudioVolume;
 
-    constructor(startingPosition, velocity, xLimit) {
+    constructor(startingPosition, velocity, collisionPoint) {
         this.radius = 5;
+        this.collisionPoint = collisionPoint;
 
         var sphereMaterial = new currentGlobalMaterialClass({color: 0x999999});
         this.ball = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 32, 32), sphereMaterial);
         this.setPosition(startingPosition);
 
-        this.xLimit = xLimit;
         this.velocity = velocity;
         this.acceleration =  new THREE.Vector3(0, 0, 0);
 
@@ -134,16 +136,16 @@ class GlassBreakingBall {
 
         if(this.hitTarget) {
             //The window has already been broken. Checking for collisions with the floor
-            if(this.ball.position.y - this.radius < 0) {
+            if(this.ball.position.y - this.radius < floorY) {
                 this.dealWithFloorCollision();
             }
         }
         else {
             //The ball is still moving towards the window. Checking for window collisions
-            var ballToXPlane = new THREE.Vector3(this.xLimit - this.ball.position.x, 0, 0);
+            var ballToWindow = this.collisionPoint.clone().sub(this.ball.position);
 
-            if(ballToXPlane.dot(this.velocity) < 0) {
-                //Ball surpassed the x plane
+            if(ballToWindow.dot(this.velocity) < 0) {
+                //Ball surpassed the window
                 this.dealWithWindowCollision();
             }
         }
@@ -172,13 +174,13 @@ class GlassBreakingBall {
         this.hitAudioVolume *= 0.7;
 
         var newPosition = this.ball.position.clone();
-        newPosition.y = this.radius;
+        newPosition.y = this.radius + floorY;
 
         this.setPosition(newPosition); //Position rollback poorly done on purpose
     }
 
     update() {
-        if(this.velocity.length() >= 0.1 || this.ball.position.y > 3) {
+        if(this.velocity.length() >= 0.1 || this.ball.position.y > 3 + floorY) {
             //Updating position and velocity
             var newPosition = new THREE.Vector3();
 
@@ -299,7 +301,7 @@ class GlassShard {
 
     checkFloorCollision() {
         //Checking for collisions with the floor
-        if(this.shard.position.y < 0) {
+        if(this.shard.position.y < floorY) {
             this.dealWithFloorCollision();
         }
     }
@@ -550,7 +552,7 @@ function createGround(obj){
 }
 
 
-function createSideWindows(obj) {
+function createSideWindows(obj) {//
     var vertices = [
         new THREE.Vector3(-210, 110, 87), //sw_0
         new THREE.Vector3(-16, 180, 71), //sw_1
@@ -829,15 +831,21 @@ function toggleGouraudPhong() {
 }
 
 function spawnGlassShatteringBall() {
-    var deviation = new THREE.Vector3().random().multiplyScalar(3);
+    var deviation = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(4);
     var extraSpeed = 30 * (Math.random() - 0.5);
 
-    var position = new THREE.Vector3(300, 300, 300);
-    var velocity = new THREE.Vector3(-80 + extraSpeed, 0, 0);
+    var position = new THREE.Vector3(-50, 90, 500);
+    var velocity = new THREE.Vector3(0, 0, -80 + extraSpeed);
+    var angle = wholeStructure.rotation.y;
+
+    rotateAroundAxis(position, new THREE.Vector3(0, 1, 0), angle);
+    rotateAroundAxis(velocity, new THREE.Vector3(0, 1, 0), angle);
+
+    var collisionPoint = position.clone().add(velocity.clone().normalize().multiplyScalar(distanceFromBallToWindow));
 
     velocity.add(deviation);
 
-    new GlassBreakingBall(position, velocity, 0);
+    new GlassBreakingBall(position, velocity, collisionPoint);
 }
 
 function ballCollidedWithWindow(position, direction) {
