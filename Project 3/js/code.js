@@ -20,10 +20,10 @@ var windowBroken = false;
 var glassShatteringBalls = [];
 var glassShards = [];
 
-var ortCam = new THREE.OrthographicCamera(window.innerWidth / - 4, window.innerWidth / 4, window.innerHeight / 4, window.innerHeight / - 4,
-    -200, 500);
+var ortCam = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
+    -2000, 2000);
 
-var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
 
 /*----------Classes---------*/
 class Spotlight {
@@ -700,7 +700,7 @@ function addKeyActions() {
     //You pressed 4
     pressedKeyActions[52] = function () {
         camera = perspCam;
-        camera.position.set(550, 250, 550);
+        camera.position.set(750, 250, 750);
         camera.lookAt(scene.position);
     }
     //You pressed 5
