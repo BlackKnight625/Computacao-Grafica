@@ -427,6 +427,15 @@ function createModel(obj) {
         new THREE.Vector3(80, 165, -75), //sw_6 (26)
         new THREE.Vector3(80, 130, -83), //sw_7 (27)
 
+        new THREE.Vector3(-254, 95, 90), //farol_right_0 (28)
+        new THREE.Vector3(-286, 85, 52), //farol_right_1 (29)
+
+        new THREE.Vector3(-254, 95, -90), //farol_left_0 (30)
+        new THREE.Vector3(-286, 85, -52), //farol_left_1 (31)
+
+        new THREE.Vector3(301, 122, 90), //back_farol_0 (32)
+        new THREE.Vector3(301, 122, -90), //back_farol_1 (33)
+
     ];
 
     var faces = [
@@ -463,22 +472,34 @@ function createModel(obj) {
         new THREE.Face3(1, 4, 8),
         new THREE.Face3(11, 9, 5),
         new THREE.Face3(10, 4, 8),
-        new THREE.Face3(2, 15, 13),
-        new THREE.Face3(13, 0, 2),
-        new THREE.Face3(1, 14, 3),
-        new THREE.Face3(1, 12, 14),
+
+
+        new THREE.Face3(29, 15, 13),
+        new THREE.Face3(13, 28, 29),
+        new THREE.Face3(30, 14, 31),
+        new THREE.Face3(30, 12, 14),
+
+
         new THREE.Face3(13, 11, 5),
         new THREE.Face3(12, 4, 10),
-        new THREE.Face3(13, 5, 0),
-        new THREE.Face3(1, 4, 12),
-        new THREE.Face3(5, 9, 4),
-        new THREE.Face3(9, 8, 4),
+
+        new THREE.Face3(13, 32, 0),
+        new THREE.Face3(1, 33, 12),
+
+        new THREE.Face3(0, 32, 5),
+        new THREE.Face3(1, 4, 33),
+
+        new THREE.Face3(28, 13, 0),
+        new THREE.Face3(1, 12, 30),
+
+        new THREE.Face3(32, 9, 33),
+        new THREE.Face3(9, 8, 33),
         new THREE.Face3(9, 11, 8),
         new THREE.Face3(11, 10, 8),
-        new THREE.Face3(3, 14, 2),
-        new THREE.Face3(14, 15, 2),
-        new THREE.Face3(14, 12, 15),
-        new THREE.Face3(12, 13, 15),
+
+        new THREE.Face3(31, 14, 29),
+        new THREE.Face3(14, 15, 29),
+
         new THREE.Face3(14, 12, 15),
         new THREE.Face3(12, 13, 15),
         new THREE.Face3(11, 13, 12),
@@ -579,14 +600,70 @@ function createSideWindows(obj) {
 
     var mesh = new THREE.Mesh(geom, material);
 
+    allMeshes.push(mesh);
     obj.add(mesh);
 }
 
-/**
- * For creating the 2 back windows
- */
-function createBackWindow(x, y, z) {
+function createFaroisFront(obj) {
+    var vertices = [
+        new THREE.Vector3(-254, 100, 90), //0
+        new THREE.Vector3(-286, 90, 52), //1
+        new THREE.Vector3(-254, 95, 90), //2
+        new THREE.Vector3(-286, 85, 52), //3
 
+        new THREE.Vector3(-254, 100, -90), //4
+        new THREE.Vector3(-286, 90, -52), //5
+        new THREE.Vector3(-254, 95, -90), //6
+        new THREE.Vector3(-286, 85, -52), //7
+    ];
+
+    var faces = [
+        new THREE.Face3(0, 1, 3),
+        new THREE.Face3(0, 3, 2),
+        new THREE.Face3(1, 5, 7),
+        new THREE.Face3(1, 7, 3),
+        new THREE.Face3(5, 4, 6),
+        new THREE.Face3(5, 6, 7),
+    ];
+
+    var geom = new THREE.Geometry();
+    geom.vertices = vertices;
+    geom.faces = faces;
+    console.log(geom);
+    geom.computeFaceNormals();
+
+    var material = new THREE.MeshBasicMaterial({color: 0xffffcc, wireframe: false});
+
+    var mesh = new THREE.Mesh(geom, material);
+
+    allMeshes.push(mesh);
+    obj.add(mesh);
+}
+
+function createFaroisBack(obj) {
+    var vertices = [
+        new THREE.Vector3(301, 127, 90), //back_farol_0
+        new THREE.Vector3(301, 127, -90), //back_farol_1
+        new THREE.Vector3(301, 122, 90), //back_farol_2
+        new THREE.Vector3(301, 122, -90), //back_farol_3
+    ];
+
+    var faces = [
+        new THREE.Face3(0, 3, 1),
+        new THREE.Face3(2, 3, 0),
+    ];
+
+    var geom = new THREE.Geometry();
+    geom.vertices = vertices;
+    geom.faces = faces;
+    geom.computeFaceNormals();
+
+    var material = new THREE.MeshBasicMaterial({color: 0xff3333, wireframe: false});
+
+    var mesh = new THREE.Mesh(geom, material);
+
+    allMeshes.push(mesh);
+    obj.add(mesh);
 }
 
 /**
@@ -603,6 +680,8 @@ function createStructure() {
     createModel(cyberTruck);
     createWindshield(cyberTruck);
     createSideWindows(cyberTruck);
+    createFaroisFront(cyberTruck);
+    createFaroisBack(cyberTruck);
 
     cyberTruck.position.set(0, -46, 0);
 
