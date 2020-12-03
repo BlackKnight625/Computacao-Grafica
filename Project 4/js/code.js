@@ -63,6 +63,7 @@ class MeshList {
  Creates the grass ground
  */
 function createGrassGround(obj){
+    var grass = new THREE.Object3D();
     var grassMaterial = new THREE.MeshBasicMaterial({color: 0x7CFC00});
     var grassGeometry = new THREE.BoxGeometry(400,20,200);
     grass = new THREE.Mesh(grassGeometry, grassMaterial);
@@ -71,15 +72,57 @@ function createGrassGround(obj){
 }
 
 
+function createFlag(obj) {
+    var geom = new THREE.Geometry(); 
+
+    const v1 = new THREE.Vector3(0,10,0);
+    const v2 = new THREE.Vector3(0,-10,0);
+    const v3 = new THREE.Vector3(0,0,10);
+    var triangle = new THREE.Triangle (v1, v2, v3);
+    var normal = triangle.normal();
+
+    geom.vertices.push(triangle.a);
+    geom.vertices.push(triangle.b);
+    geom.vertices.push(triangle.c);
+    geom.faces.push( new THREE.Face3( 0, 1, 2, normal ));
+
+    var material = new THREE.MeshBasicMaterial({color: 0xff0000});
+    var mesh = new THREE.Mesh(geom, material);
+
+    obj.add(mesh);
+}
+
+
+function createStick(obj) {
+    var stickMaterial = new THREE.MeshBasicMaterial({color: 0x7CFC00});
+    var stickGeometry = new THREE.BoxGeometry(20,2,20);
+    stick = new THREE.Mesh(stickGeometry, stickMaterial);
+    stick.position.set(0,0,0);
+    obj.add(stick);
+}
+
+
+function createGolfFlag(obj) {
+    var flag = new THREE.Object3D();
+    var stick = new THREE.Object3D();
+    createFlag(flag);
+    createStick(stick);
+    obj.add(flag);
+    obj.add(stick);
+
+}
 
 /**
  Creates the whole Structure
  */
 function createStructure() {
-    wholeStructure = new THREE.Object3D();
     var ground = new THREE.Object3D();
     createGrassGround(ground);
     scene.add(ground);
+
+    golfFlag = new THREE.Object3D();
+    createGolfFlag(golfFlag);
+    scene.add(golfFlag);
 
     var loader = new THREE.CubeTextureLoader();
     var texture = loader.load([
@@ -91,6 +134,8 @@ function createStructure() {
     'resources/images/cubemaps/computer-history-museum/neg-z.jpg',
     ]);
     scene.background = texture;
+
+    
 }
 
 /**
@@ -198,7 +243,7 @@ function init() {
 
     allMeshes = new MeshList();
     allMeshes.add(mesh);
-    scene.add(mesh);
+    //scene.add(mesh);
 
     //Adding key actions
     addKeyActions();
