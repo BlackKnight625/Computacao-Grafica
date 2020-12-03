@@ -20,7 +20,6 @@ class MeshList {
     add(mesh, basicMaterial, phongMaterial) {
         this.meshes.push(mesh);
 
-        //Adding new instances to both lists to prevent meshes from pointing to the same material
         this.basics.push(basicMaterial);
         this.phongs.push(phongMaterial);
 
@@ -28,21 +27,41 @@ class MeshList {
         this.updateMaterial(this.meshes.length - 1);
     }
 
+    /**
+     * Returns the list that contains the currently used materials (MeshBasicMaterial if lightning is off,
+     * MeshPhongMaterial if it's on)
+     */
     getCurrentMaterials() {
         return this.lightningToggle ? this.basics : this.phongs;
     }
 
+    /**
+     * Switches the materials of all meshes from Basic to Phong or from Phong to Basic,
+     * depending on the toggle of lightning
+     */
     switchMaterials() {
         this.lightningToggle = !this.lightningToggle;
         this.updateMaterials();
     }
 
+    /**
+     * Updates the meshe's material's characteristics at the given index depending 
+     * on the current lightning and wireframe toggles
+     * @param {*} index 
+     * The index of the mesh to update
+     * @param {*} materials 
+     * Optional list with the materials to be applied
+     */
     updateMaterial(index, materials = this.getCurrentMaterials()) {
         this.meshes[index].material = materials[index];
         this.basics[index].wireframe = this.wireframeToggle;
         this.phongs[index].wireframe = this.wireframeToggle;
     }
 
+    /**
+     * Updates all the meshes's material's characteristics depending 
+     * on the current lightning and wireframe toggles
+     */
     updateMaterials() {
         var materials = this.getCurrentMaterials();
 
@@ -51,6 +70,9 @@ class MeshList {
         }
     }
 
+    /**
+     * Switches the wireframe toggle of all meshes
+     */
     switchWireframes() {
         this.wireframeToggle = !this.wireframeToggle;
         this.updateMaterials();
