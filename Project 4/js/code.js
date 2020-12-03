@@ -274,7 +274,7 @@ function createStructure() {
     ]);
     scene.background = texture;
 
-    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
+    ball = new GolfBall(new THREE.Vector3(0, 2.5, 0), new THREE.Vector3(100, 2.5, 100), 100, 2, 5);
 }
 
 function createPauseScreen() {
@@ -461,8 +461,9 @@ function update() {
     if(ballMoving) {
         //Updating objects
         ball.update();
-        golfFlag.rotateY(Math.PI * delta);
     }
+
+    golfFlag.rotateY(Math.PI * delta);
 }
 
 function toggleBallMovement() {
