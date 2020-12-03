@@ -8,8 +8,9 @@ var orbitControls;
 var allMeshes;
 var golfFlag;
 
-var ortCam;
-
+var pauseCamera;
+var paused = false;
+var reset = false;
 
 var ball;
 
@@ -144,6 +145,10 @@ class GolfBall {
 
         this.setPosition(newPosition);
     }
+
+    reset() {
+        this.setPosition(jumpingFrom);
+    }
 }
 
 /*----------Methods---------*/
@@ -275,6 +280,15 @@ function createStructure() {
     
 }
 
+function createPauseScreen() {
+    var screenPicture = new THREE.TextureLoader().load("img/pause_screen.png");
+    var material = new THREE.MeshBasicMaterial({color: 0xCCCCCC, map: screenPicture});
+    var box = new THREE.BoxGeometry(window.innerWidth / 2, window.innerHeight / 2, 1);
+    var screen = new THREE.Mesh(box, material);
+
+    pauseScene.add(screen);
+}
+
 /**
  * Called when the window is resized
  */
@@ -341,6 +355,11 @@ function animate() {
  */
 function display() {
     renderer.render(scene, camera);
+
+    if(paused) {
+        renderer.clearDepth();
+        renderer.render(pauseScene, pauseCamera);
+    }
 }
 
 function addKeyActions() {
@@ -348,6 +367,10 @@ function addKeyActions() {
     pressedKeyActions[105] = function () {allMeshes.switchMaterials()} //i
     pressedKeyActions[87] = function () {allMeshes.switchWireframes()} //W
     pressedKeyActions[119] = function () {allMeshes.switchWireframes()} //w
+    pressedKeyActions[83] = function () {pause()} //S
+    pressedKeyActions[115] = function () {pause()} //s
+    pressedKeyActions[82] = function () {reset()} //R
+    pressedKeyActions[114] = function () {reset()} //r
 }
 
 /**
@@ -355,6 +378,7 @@ function addKeyActions() {
  */
 function init() {
     scene = new THREE.Scene();
+    pauseScene = new THREE.Scene();
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
@@ -371,6 +395,9 @@ function init() {
     camera.position.z = 500;
     camera.lookAt(scene.position);
 
+    pauseCamera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
+        -100, 100);
+
     var axes = new THREE.AxesHelper(20);
     scene.add(axes);
 
@@ -382,6 +409,7 @@ function init() {
     allMeshes = new MeshList();
     
     createStructure();
+    createPauseScreen();
 
     ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
 
@@ -415,20 +443,25 @@ function update() {
     }
 
     orbitControls.update();
+    
 
-    //Updating objects
-    ball.update();
-    golfFlag.rotateY(Math.PI * delta);
-
+    if(!paused) {
+        //Updating objects
+        ball.update();
+        golfFlag.rotateY(Math.PI * delta);
+    }
 }
 
+function pause() {
+    if(!paused) {
+        renderer.autoclear = false;
+        paused = true;
+    }
+}
 
-function replaceEveryonesMaterials() {
-    //Switching all mesh's materials with the current global one
-
-    //TODO change to 2 lists 
-
-    for(var mesh of allMeshes) {
-        mesh.material = new currentGlobalMaterialClass({color: mesh.material.color.getHex()});
+function reset() {
+    if(paused) {
+        renderer.autoclear = true;
+        paused = false;
     }
 }
