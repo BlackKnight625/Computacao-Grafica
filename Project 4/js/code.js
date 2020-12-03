@@ -24,12 +24,12 @@ var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 function createStructure() {
     var loader = new THREE.CubeTextureLoader();
     var texture = loader.load([
-    'resources/images/cubemaps/computer-history-museum/pos-x.jpg',
-    'resources/images/cubemaps/computer-history-museum/neg-x.jpg',
-    'resources/images/cubemaps/computer-history-museum/pos-y.jpg',
-    'resources/images/cubemaps/computer-history-museum/neg-y.jpg',
-    'resources/images/cubemaps/computer-history-museum/pos-z.jpg',
-    'resources/images/cubemaps/computer-history-museum/neg-z.jpg',
+    '../cubemap/nx.png',
+    '../cubemap/ny.png',
+    '../cubemap/nz.png',
+    '../cubemap/px.png',
+    '../cubemap/py.png',
+    '../cubemap/pz.png',
     ]);
     scene.background = texture;
 }
