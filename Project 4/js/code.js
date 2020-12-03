@@ -4,7 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
-
+var orbitControls;
 
 var allMeshes = [];
 
@@ -40,6 +40,16 @@ function createStructure() {
     createGrassGround(ground);
     scene.add(ground);
 
+    var loader = new THREE.CubeTextureLoader();
+    var texture = loader.load([
+    'resources/images/cubemaps/computer-history-museum/pos-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-z.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-z.jpg',
+    ]);
+    scene.background = texture;
 }
 
 /**
@@ -122,10 +132,21 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
+    camera = perspCam;
+
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.x = 0;
+    camera.position.y = 500;
+    camera.position.z = 500;
+    camera.lookAt(scene.position);
+
+    orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
 
     //Adding key actions
     addKeyActions();
@@ -155,6 +176,8 @@ function update() {
             delete pressedKeys[key];
         }
     }
+
+    orbitControls.update();
 }
 
 function replaceEveryonesMaterials() {
