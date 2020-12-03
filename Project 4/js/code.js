@@ -132,8 +132,6 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = perspCam;
-
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -145,8 +143,13 @@ function init() {
     camera.position.z = 500;
     camera.lookAt(scene.position);
 
+    var axes = new THREE.AxesHelper(20);
+    scene.add(axes);
+
     orbitControls = new OrbitControls(camera, renderer.domElement);
     orbitControls.enableDamping = true;
+
+    createStructure();
 
     //Adding key actions
     addKeyActions();
