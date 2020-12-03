@@ -143,6 +143,10 @@ class GolfBall {
 
         this.setPosition(newPosition);
     }
+
+    reset() {
+        this.setPosition(jumpingFrom);
+    }
 }
 
 /*----------Methods---------*/
