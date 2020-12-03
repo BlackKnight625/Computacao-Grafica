@@ -1,3 +1,5 @@
+const { MeshBasicMaterial, MeshPhongMaterial } = require("./three");
+
 var camera, renderer, scene;
 var pressedKeys = {};
 var keyActions = {};
@@ -5,12 +7,64 @@ var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
 var orbitControls;
-
-var allMeshes = [];
+var allMeshes = new MeshList();
 
 var ortCam;
 
 /*----------Classes---------*/
+class MeshList {
+    basics = [];
+    phongs = [];
+    meshes = [];
+    lightningToggle = true;
+    wireframeToggle = true;
+
+    add(mesh) {
+        this.meshes.push(mesh);
+
+        if(mesh.material instanceof MeshBasicMaterial) {
+            //Current material is Basic Material
+            this.basics.push(mesh.material);
+            this.phongs.push(new MeshPhongMaterial({color: mesh.material.color.getHex()}));
+        }
+        else {
+            //Current material is Phong Material
+            this.basics.push(new MeshBasicMaterial({color: mesh.material.color.getHex()}));
+            this.phongs.push(mesh.material);
+        }
+
+        this.updateMaterials();
+    }
+
+    getCurrentMaterials() {
+        return this.lightningToggle ? this.basics : this.phongs;
+    }
+
+    switchMaterials() {
+        this.lightningToggle = !this.lightningToggle;
+        this.updateMaterials();
+    }
+
+    updateMaterial(index) {
+        var materials = this.getCurrentMaterials();
+
+        this.meshes[index].material = materials[i];
+    }
+
+    updateMaterials() {
+        var materials = this.getCurrentMaterials();
+
+        for(var i = 0; i < this.meshes.length; i++) {
+            this.updateMaterial(i);
+        }
+    }
+
+    switchWireframes() {
+        for (var mesh of meshes) {
+
+        }
+    }
+}
 
 /*----------Methods---------*/
 
@@ -115,7 +169,8 @@ function display() {
 }
 
 function addKeyActions() {
-
+    pressedKeyActions[87] = function () {allMeshes.switchMaterials()} //I
+    pressedKeyActions[119] = function () {allMeshes.switchMaterials()} //i
 }
 
 /**
@@ -148,6 +203,7 @@ function init() {
     var ball = new THREE.SphereGeometry(50, 32, 32);
     var mesh = new THREE.Mesh(ball, material);
 
+    allMeshes.add(mesh);
     scene.add(mesh);
 
     //Adding key actions
@@ -181,6 +237,7 @@ function update() {
 
     orbitControls.update();
 }
+
 
 function replaceEveryonesMaterials() {
     //Switching all mesh's materials with the current global one
