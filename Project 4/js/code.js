@@ -200,16 +200,66 @@ function createGrassGround(obj){
 }
 
 
+function createFlag(obj) {
+    var geom = new THREE.Geometry(); 
+
+    const v1 = new THREE.Vector3(0,10,0);
+    const v2 = new THREE.Vector3(0,-10,0);
+    const v3 = new THREE.Vector3(0,0,10);
+    var triangle = new THREE.Triangle (v1, v2, v3);
+
+    geom.vertices.push(triangle.a);
+    geom.vertices.push(triangle.b);
+    geom.vertices.push(triangle.c);
+    geom.faces.push( new THREE.Face3( 0, 1, 2 ));
+    
+
+    var material = new THREE.MeshBasicMaterial({color: 0xff0000});
+    var phongMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
+    material.side = THREE.DoubleSide;
+    geom.computeFaceNormals();
+    var mesh = new THREE.Mesh(geom, material);
+    mesh.position.set(0,100,0);
+
+    allMeshes.add(mesh, material, phongMaterial);
+
+    obj.add(mesh);
+}
+
+
+function createStick(obj) {
+    var stickMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+    var stickGeometry = new THREE.CylinderGeometry(0.8, 0.8, 110, 30);
+    stick = new THREE.Mesh(stickGeometry, stickMaterial);
+    var phongMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
+    stick.position.set(0,55,0);
+
+    allMeshes.add(stick, stickMaterial, phongMaterial);
+    obj.add(stick);
+}
+
+
+function createGolfFlag(obj) {
+    var flag = new THREE.Object3D();
+    var stick = new THREE.Object3D();
+    createFlag(flag);
+    createStick(stick);
+    obj.add(flag);
+    obj.add(stick);
+
+}
 
 /**
  Creates the whole Structure
  */
 function createStructure() {
-    wholeStructure = new THREE.Object3D();
     var ground = new THREE.Object3D();
     createGrassGround(ground);
     scene.add(ground);
 
+    golfFlag = new THREE.Object3D();
+    createGolfFlag(golfFlag);
+    scene.add(golfFlag);
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 200, 0);
     scene.add(directionalLight);
@@ -224,6 +274,8 @@ function createStructure() {
     'cubemap/nz.png',
     ]);
     scene.background = texture;
+
+    
 }
 
 function createPauseScreen() {
@@ -357,7 +409,7 @@ function init() {
     createStructure();
     createPauseScreen();
 
-    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
+    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
 
     //Adding key actions
     addKeyActions();
