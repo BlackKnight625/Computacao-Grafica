@@ -215,6 +215,7 @@ function createFlag(obj) {
     material.side = THREE.DoubleSide;
     geom.computeFaceNormals();
     var mesh = new THREE.Mesh(geom, material);
+    mesh.position.set(0,100,0);
 
     allMeshes.add(mesh, material, phongMaterial);
 
@@ -223,10 +224,13 @@ function createFlag(obj) {
 
 
 function createStick(obj) {
-    var stickMaterial = new THREE.MeshBasicMaterial({color: 0x7CFC00});
-    var stickGeometry = new THREE.BoxGeometry(20,2,20);
+    var stickMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+    var stickGeometry = new THREE.CylinderGeometry(0.8, 0.8, 110, 30);
     stick = new THREE.Mesh(stickGeometry, stickMaterial);
-    stick.position.set(0,0,0);
+    var phongMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
+    stick.position.set(0,55,0);
+
+    allMeshes.add(stick, stickMaterial, phongMaterial);
     obj.add(stick);
 }
 
@@ -378,7 +382,7 @@ function init() {
     
     createStructure();
 
-    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
+    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
 
     //Adding key actions
     addKeyActions();
@@ -412,7 +416,7 @@ function update() {
     orbitControls.update();
 
     //Updating objects
-    //ball.update();
+    ball.update();
 }
 
 
