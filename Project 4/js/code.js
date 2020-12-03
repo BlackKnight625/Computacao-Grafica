@@ -155,19 +155,15 @@ function createGrassGround(obj){
 
     var texture = new THREE.TextureLoader().load('img/grass.png');
 
-    /*
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set( 400, 400 );
-    */
+    texture.repeat.set( 10, 10 );
 
-    var bmap = new THREE.TextureLoader().load('img/bumping(2).jpg');
+    var bmap = new THREE.TextureLoader().load('img/bumping.jpg');
 
-    /*
     bmap.wrapS = THREE.RepeatWrapping;
     bmap.wrapT = THREE.RepeatWrapping;
     bmap.repeat.set( 10, 10 );
-    */
 
     var nmap = new THREE.TextureLoader().load('img/normal(1).png');
 
@@ -178,7 +174,12 @@ function createGrassGround(obj){
     */
 
     var materialBasic = new THREE.MeshBasicMaterial({color: 0xffffff, map: texture});
-    var materialPhong = new THREE.MeshPhongMaterial({color: 0xffffff, map: texture, bumpMap: bmap, normalMap: nmap});
+    var materialPhong = new THREE.MeshPhongMaterial( {
+        color: 0xffffff, 
+        map: texture, 
+        bumpMap: bmap,
+        bumpScale: 5,
+    });
 
     var mesh = new THREE.Mesh(geometry, materialPhong);
     
@@ -363,7 +364,7 @@ function update() {
     orbitControls.update();
 
     //Updating objects
-    ball.update();
+    //ball.update();
 }
 
 
