@@ -7,10 +7,14 @@ var clock = new THREE.Clock();
 var orbitControls;
 var allMeshes;
 
-var ortCam;
-
+var pauseCamera;
+var paused = false;
 
 var ball;
+var ballMoving = false;
+
+var directionalLight;
+var pointLight;
 
 /*----------Classes---------*/
 class MeshList {
@@ -143,6 +147,11 @@ class GolfBall {
 
         this.setPosition(newPosition);
     }
+
+    reset() {
+        this.setPosition(this.jumpingFrom);
+        this.timeElapsed = 0;
+    }
 }
 
 /*----------Methods---------*/
@@ -167,6 +176,7 @@ function createGrassGround(){
     bmap.repeat.set( 10, 10 );
 
     var materialBasic = new THREE.MeshBasicMaterial({color: 0xffffff, map: texture});
+
     var materialPhong = new THREE.MeshPhongMaterial( {
         color: 0xffffff, 
         map: texture, 
@@ -174,9 +184,11 @@ function createGrassGround(){
         bumpScale: 5,
     });
 
-    var mesh = new THREE.Mesh(geometry, materialPhong);
+    var mesh = new THREE.Mesh(geometry, materialBasic);
     
     floor.add(mesh);
+
+    allMeshes.add(mesh, materialBasic, materialPhong);
 
     scene.add(floor);
 }
@@ -235,16 +247,19 @@ function createGolfFlag(obj) {
  Creates the whole Structure
  */
 function createStructure() {
-    var ground = new THREE.Object3D();
     createGrassGround();
-    scene.add(ground);
 
     golfFlag = new THREE.Object3D();
     createGolfFlag(golfFlag);
     scene.add(golfFlag);
-    var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 200, 0);
+
+    directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(-100, 200, 0);
     scene.add(directionalLight);
+
+    pointLight = new THREE.PointLight(0xff0000, 1, 300);
+    pointLight.position.set(-50, 1, -50);
+    scene.add(pointLight);
 
     var loader = new THREE.CubeTextureLoader();
     var texture = loader.load([
@@ -257,7 +272,16 @@ function createStructure() {
     ]);
     scene.background = texture;
 
-    
+    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
+}
+
+function createPauseScreen() {
+    var screenPicture = new THREE.TextureLoader().load("img/pause_screen.png");
+    var material = new THREE.MeshBasicMaterial({color: 0xCCCCCC, map: screenPicture});
+    var box = new THREE.BoxGeometry(window.innerWidth / 2, window.innerHeight / 2, 1);
+    var screen = new THREE.Mesh(box, material);
+
+    pauseScene.add(screen);
 }
 
 /**
@@ -326,13 +350,36 @@ function animate() {
  */
 function display() {
     renderer.render(scene, camera);
+
+    if(paused) {
+        renderer.clearDepth();
+        renderer.render(pauseScene, pauseCamera);
+    }
 }
 
 function addKeyActions() {
+    // Wireframe/Material keys
     pressedKeyActions[73] = function () {allMeshes.switchMaterials()} //I
     pressedKeyActions[105] = function () {allMeshes.switchMaterials()} //i
     pressedKeyActions[87] = function () {allMeshes.switchWireframes()} //W
     pressedKeyActions[119] = function () {allMeshes.switchWireframes()} //w
+
+    // Screen pause/reset keys
+    pressedKeyActions[83] = function () {pause()} //S
+    pressedKeyActions[115] = function () {pause()} //s
+    pressedKeyActions[82] = function () {reset()} //R
+    pressedKeyActions[114] = function () {reset()} //r
+    
+    // Ball movement related keys
+    pressedKeyActions[66] = function() {toggleBallMovement()} //B
+    pressedKeyActions[98] = function() {toggleBallMovement()} //b
+
+    // Light related keys
+    pressedKeyActions[68] = function() {switchDirectionalLight()} //D
+    pressedKeyActions[100] = function() {switchDirectionalLight()} //d
+
+    pressedKeyActions[80] = function() {switchPointLight()} //P
+    pressedKeyActions[112] = function() {switchPointLight()} //p
 }
 
 /**
@@ -340,6 +387,7 @@ function addKeyActions() {
  */
 function init() {
     scene = new THREE.Scene();
+    pauseScene = new THREE.Scene();
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
@@ -356,6 +404,9 @@ function init() {
     camera.position.z = 500;
     camera.lookAt(scene.position);
 
+    pauseCamera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
+        -100, 100);
+
     var axes = new THREE.AxesHelper(20);
     scene.add(axes);
 
@@ -367,8 +418,7 @@ function init() {
     allMeshes = new MeshList();
     
     createStructure();
-
-    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 5);
+    createPauseScreen();
 
     //Adding key actions
     addKeyActions();
@@ -382,6 +432,10 @@ function update() {
     if(delta > 0.02) {
         //If the player leaves the browser, the next delta will be huge. This prevents bad things from happening
         delta = 0.02;
+    }
+
+    if (paused) {
+        delta = 0;
     }
 
     //Calling every active key actions
@@ -401,17 +455,29 @@ function update() {
 
     orbitControls.update();
 
-    //Updating objects
-    //ball.update();
+    if(ballMoving) {
+        //Updating objects
+        ball.update();
+    }
 }
 
+function toggleBallMovement() {
+    ballMoving = !ballMoving;
+}
 
-function replaceEveryonesMaterials() {
-    //Switching all mesh's materials with the current global one
+function pause() {
+    renderer.autoClear = !renderer.autoClear;
+    paused = !paused;
+}
 
-    //TODO change to 2 lists 
+function reset() {
+    ball.reset();
+}
 
-    for(var mesh of allMeshes) {
-        mesh.material = new currentGlobalMaterialClass({color: mesh.material.color.getHex()});
-    }
+function switchDirectionalLight() {
+    directionalLight.visible = !directionalLight.visible;
+}
+
+function switchPointLight() {
+    pointLight.visible = !pointLight.visible;
 }
