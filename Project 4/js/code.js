@@ -104,8 +104,9 @@ class GolfBall {
         this.ballRadius = ballRadius;
 
         //Creating the ball
+        var ballBumpMap = new THREE.TextureLoader().load("img/golfball_bump.jpg");
         var basicMaterial = new THREE.MeshBasicMaterial({color: 0xBBBBBB});
-        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, specular: 0xAAAAAA});
+        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, shininess: 300, bumpMap: ballBumpMap});
         var sphere = new THREE.SphereGeometry(this.ballRadius, 50, 50);
         this.ball = new THREE.Mesh(sphere, basicMaterial);
 
@@ -329,7 +330,7 @@ function init() {
     
     createStructure();
 
-    //ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
+    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
 
     //Adding key actions
     addKeyActions();
