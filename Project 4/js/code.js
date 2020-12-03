@@ -1,5 +1,3 @@
-const { MeshBasicMaterial, MeshPhongMaterial } = require("./three");
-
 var camera, renderer, scene;
 var pressedKeys = {};
 var keyActions = {};
@@ -7,7 +5,7 @@ var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
 var orbitControls;
-var allMeshes = new MeshList();
+var allMeshes;
 
 var ortCam;
 
@@ -17,23 +15,17 @@ class MeshList {
     phongs = [];
     meshes = [];
     lightningToggle = true;
-    wireframeToggle = true;
+    wireframeToggle = false;
 
     add(mesh) {
         this.meshes.push(mesh);
 
-        if(mesh.material instanceof MeshBasicMaterial) {
-            //Current material is Basic Material
-            this.basics.push(mesh.material);
-            this.phongs.push(new MeshPhongMaterial({color: mesh.material.color.getHex()}));
-        }
-        else {
-            //Current material is Phong Material
-            this.basics.push(new MeshBasicMaterial({color: mesh.material.color.getHex()}));
-            this.phongs.push(mesh.material);
-        }
+        //Adding new instances to both lists to prevent meshes from pointing to the same material
+        this.basics.push(new THREE.MeshBasicMaterial({color: mesh.material.color.getHex()}));
+        this.phongs.push(new THREE.MeshPhongMaterial({color: mesh.material.color.getHex()}));
 
-        this.updateMaterials();
+        //Updating the material in case its current material or wireframe do not match the currently active ones
+        this.updateMaterial(this.meshes.length - 1);
     }
 
     getCurrentMaterials() {
@@ -45,24 +37,23 @@ class MeshList {
         this.updateMaterials();
     }
 
-    updateMaterial(index) {
-        var materials = this.getCurrentMaterials();
-
-        this.meshes[index].material = materials[i];
+    updateMaterial(index, materials = this.getCurrentMaterials()) {
+        this.meshes[index].material = materials[index];
+        this.basics[index].wireframe = this.wireframeToggle;
+        this.phongs[index].wireframe = this.wireframeToggle;
     }
 
     updateMaterials() {
         var materials = this.getCurrentMaterials();
 
         for(var i = 0; i < this.meshes.length; i++) {
-            this.updateMaterial(i);
+            this.updateMaterial(i, materials);
         }
     }
 
     switchWireframes() {
-        for (var mesh of meshes) {
-
-        }
+        this.wireframeToggle = !this.wireframeToggle;
+        this.updateMaterials();
     }
 }
 
@@ -169,8 +160,10 @@ function display() {
 }
 
 function addKeyActions() {
-    pressedKeyActions[87] = function () {allMeshes.switchMaterials()} //I
-    pressedKeyActions[119] = function () {allMeshes.switchMaterials()} //i
+    pressedKeyActions[73] = function () {allMeshes.switchMaterials()} //I
+    pressedKeyActions[105] = function () {allMeshes.switchMaterials()} //i
+    pressedKeyActions[87] = function () {allMeshes.switchWireframes()} //W
+    pressedKeyActions[119] = function () {allMeshes.switchWireframes()} //w
 }
 
 /**
@@ -203,6 +196,7 @@ function init() {
     var ball = new THREE.SphereGeometry(50, 32, 32);
     var mesh = new THREE.Mesh(ball, material);
 
+    allMeshes = new MeshList();
     allMeshes.add(mesh);
     scene.add(mesh);
 
