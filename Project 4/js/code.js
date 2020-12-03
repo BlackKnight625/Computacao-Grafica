@@ -148,6 +148,7 @@ class GolfBall {
 
     reset() {
         this.setPosition(jumpingFrom);
+        this.timeElapsed = 0;
     }
 }
 
