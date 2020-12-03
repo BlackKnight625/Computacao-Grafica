@@ -8,11 +8,7 @@ var orbitControls;
 
 var allMeshes = [];
 
-//TODO Change this
-var ortCam = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
-    -2000, 2000);
-
-var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+var ortCam;
 
 /*----------Classes---------*/
 
@@ -114,8 +110,6 @@ function init() {
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    camera = perspCam;
-
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -129,6 +123,14 @@ function init() {
 
     orbitControls = new OrbitControls(camera, renderer.domElement);
     orbitControls.enableDamping = true;
+
+    document.body.appendChild(renderer.domElement);
+
+    var material = new THREE.MeshBasicMaterial({color: 0x66B2FF});
+    var ball = new THREE.SphereGeometry(50, 32, 32);
+    var mesh = new THREE.Mesh(ball, material);
+
+    scene.add(mesh);
 
     //Adding key actions
     addKeyActions();
