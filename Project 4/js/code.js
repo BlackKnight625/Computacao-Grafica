@@ -22,7 +22,16 @@ var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
  Creates the whole Structure
  */
 function createStructure() {
-
+    var loader = new THREE.CubeTextureLoader();
+    var texture = loader.load([
+    'resources/images/cubemaps/computer-history-museum/pos-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-z.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-z.jpg',
+    ]);
+    scene.background = texture;
 }
 
 /**
@@ -104,6 +113,8 @@ function init() {
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(new THREE.Color(0xEEEEEE));
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    camera = perspCam;
 
     //Adding event listeners
     window.addEventListener("keydown", onKeyDown);
