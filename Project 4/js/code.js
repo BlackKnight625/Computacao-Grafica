@@ -19,9 +19,26 @@ var perspCam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 /*----------Methods---------*/
 
 /**
+ Creates the grass ground
+ */
+function createGrassGround(obj){
+    var grassMaterial = new THREE.MeshBasicMaterial({color: 0x7CFC00});
+    var grassGeometry = new THREE.BoxGeometry(400,20,200);
+    grass = new THREE.Mesh(grassGeometry, grassMaterial);
+    grass.position.set(0,0,0);
+    obj.add(grass);
+}
+
+
+
+/**
  Creates the whole Structure
  */
 function createStructure() {
+    wholeStructure = new THREE.Object3D();
+    var ground = new THREE.Object3D();
+    createGrassGround(ground);
+    scene.add(ground);
 
 }
 
