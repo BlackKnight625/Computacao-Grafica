@@ -9,6 +9,9 @@ var allMeshes;
 
 var ortCam;
 
+
+var ball;
+
 /*----------Classes---------*/
 class MeshList {
     basics = [];
@@ -76,6 +79,68 @@ class MeshList {
     switchWireframes() {
         this.wireframeToggle = !this.wireframeToggle;
         this.updateMaterials();
+    }
+}
+
+class GolfBall {
+    ball;
+    jumpingFrom;
+    jumpingTo;
+    height;
+    timeElapsed = 0;
+    maxHorizontal;
+    secondsBetweenJumps;
+    direction;
+    ballRadius;
+
+    constructor(jumpingFrom, jumpingTo, height, secondsBetweenJumps, ballRadius) {
+        this.maxHorizontal = jumpingFrom.distanceTo(jumpingTo);
+
+        this.jumpingFrom = jumpingFrom;
+        this.jumpingTo = jumpingTo;
+        this.direction = jumpingFrom.clone().sub(jumpingTo).normalize();
+        this.height = height;
+        this.secondsBetweenJumps = secondsBetweenJumps;
+        this.ballRadius = ballRadius;
+
+        //Creating the ball
+        var basicMaterial = new THREE.MeshBasicMaterial({color: 0xBBBBBB});
+        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, specular: 0xAAAAAA});
+        var sphere = new THREE.SphereGeometry(this.ballRadius, 50, 50);
+        this.ball = new THREE.Mesh(sphere, basicMaterial);
+
+        this.setPosition(jumpingFrom);
+
+        allMeshes.add(this.ball, basicMaterial, phongMaterial);
+        scene.add(this.ball);
+    }
+
+    setPosition(newPosition) {
+        this.ball.position.set(newPosition.x, newPosition.y, newPosition.z);
+    }
+    
+    update() {
+        this.timeElapsed += delta;
+        var x;
+        var t = this.timeElapsed % this.secondsBetweenJumps;
+
+        if(Math.floor(this.timeElapsed / this.secondsBetweenJumps) % 2 == 0) {
+            //Moving forward
+            x = this.maxHorizontal * t / this.secondsBetweenJumps;
+        }
+        else {
+            //Moving back
+            x = this.maxHorizontal - (this.maxHorizontal * t / this.secondsBetweenJumps);
+        }
+
+        //Formula to calculate the height of a parabula given a t
+        var y = -4 * this.height * t * (t - this.secondsBetweenJumps) / (this.secondsBetweenJumps * this.secondsBetweenJumps);
+
+        var newPosition = this.direction.clone().multiplyScalar(x);
+        newPosition.y = y;
+        newPosition.add(this.jumpingFrom);
+
+        this.setPosition(newPosition);
     }
 }
 
@@ -214,14 +279,10 @@ function init() {
 
     document.body.appendChild(renderer.domElement);
 
-    var basicMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
-    var phongMaterial = new THREE.MeshPhongMaterial({color: 0x00B2FF});
-    var ball = new THREE.SphereGeometry(50, 32, 32);
-    var mesh = new THREE.Mesh(ball, basicMaterial);
-
     allMeshes = new MeshList();
-    allMeshes.add(mesh, basicMaterial, phongMaterial);
-    scene.add(mesh);
+
+
+    ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
 
     //Adding key actions
     addKeyActions();
@@ -253,6 +314,9 @@ function update() {
     }
 
     orbitControls.update();
+
+    //Updating objects
+    ball.update();
 }
 
 
