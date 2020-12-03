@@ -17,12 +17,12 @@ class MeshList {
     lightningToggle = true;
     wireframeToggle = false;
 
-    add(mesh) {
+    add(mesh, basicMaterial, phongMaterial) {
         this.meshes.push(mesh);
 
         //Adding new instances to both lists to prevent meshes from pointing to the same material
-        this.basics.push(new THREE.MeshBasicMaterial({color: mesh.material.color.getHex()}));
-        this.phongs.push(new THREE.MeshPhongMaterial({color: mesh.material.color.getHex()}));
+        this.basics.push(basicMaterial);
+        this.phongs.push(phongMaterial);
 
         //Updating the material in case its current material or wireframe do not match the currently active ones
         this.updateMaterial(this.meshes.length - 1);
@@ -192,12 +192,13 @@ function init() {
 
     document.body.appendChild(renderer.domElement);
 
-    var material = new THREE.MeshBasicMaterial({color: 0x66B2FF});
+    var basicMaterial = new THREE.MeshBasicMaterial({color: 0x66B2FF});
+    var phongMaterial = new THREE.MeshPhongMaterial({color: 0x00B2FF});
     var ball = new THREE.SphereGeometry(50, 32, 32);
-    var mesh = new THREE.Mesh(ball, material);
+    var mesh = new THREE.Mesh(ball, basicMaterial);
 
     allMeshes = new MeshList();
-    allMeshes.add(mesh);
+    allMeshes.add(mesh, basicMaterial, phongMaterial);
     scene.add(mesh);
 
     //Adding key actions
