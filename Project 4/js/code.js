@@ -6,9 +6,11 @@ var delta;
 var clock = new THREE.Clock();
 var orbitControls;
 var allMeshes;
+var golfFlag;
 
 var pauseCamera;
 var paused = false;
+var reset = false;
 
 var ball;
 
@@ -215,8 +217,9 @@ function createFlag(obj) {
     
 
     var material = new THREE.MeshBasicMaterial({color: 0xff0000});
-    var phongMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
     material.side = THREE.DoubleSide;
+    var phongMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
+    phongMaterial.side = THREE.DoubleSide;
     geom.computeFaceNormals();
     var mesh = new THREE.Mesh(geom, material);
     mesh.position.set(0,100,0);
@@ -246,7 +249,6 @@ function createGolfFlag(obj) {
     createStick(stick);
     obj.add(flag);
     obj.add(stick);
-
 }
 
 /**
@@ -441,10 +443,12 @@ function update() {
     }
 
     orbitControls.update();
+    
 
     if(!paused) {
         //Updating objects
         ball.update();
+        golfFlag.rotateY(Math.PI * delta);
     }
 }
 
