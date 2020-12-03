@@ -4,7 +4,7 @@ var keyActions = {};
 var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
-
+var orbitControls;
 
 var allMeshes = [];
 
@@ -110,6 +110,15 @@ function init() {
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
 
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.x = 0;
+    camera.position.y = 500;
+    camera.position.z = 500;
+    camera.lookAt(scene.position);
+
+    orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+
     //Adding key actions
     addKeyActions();
 
@@ -138,6 +147,8 @@ function update() {
             delete pressedKeys[key];
         }
     }
+
+    orbitControls.update();
 }
 
 function replaceEveryonesMaterials() {
