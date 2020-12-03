@@ -150,7 +150,7 @@ class GolfBall {
 /**
  Creates the grass ground
  */
-function createGrassGround(obj){
+function createGrassGround(){
     var floor = new THREE.Object3D();
     var geometry = new THREE.BoxGeometry(400, 0.1, 400, 500, 2, 500);
 
@@ -166,14 +166,6 @@ function createGrassGround(obj){
     bmap.wrapT = THREE.RepeatWrapping;
     bmap.repeat.set( 10, 10 );
 
-    var nmap = new THREE.TextureLoader().load('img/normal(1).png');
-
-    /*
-    nmap.wrapS = THREE.RepeatWrapping;
-    nmap.wrapT = THREE.RepeatWrapping;
-    nmap.repeat.set( 400, 400 );
-    */
-
     var materialBasic = new THREE.MeshBasicMaterial({color: 0xffffff, map: texture});
     var materialPhong = new THREE.MeshPhongMaterial( {
         color: 0xffffff, 
@@ -187,13 +179,6 @@ function createGrassGround(obj){
     floor.add(mesh);
 
     scene.add(floor);
-    /*
-    var grassMaterial = new THREE.MeshBasicMaterial({color: 0x006600, wireframe: true});
-    var grassGeometry = new THREE.BoxGeometry(400,20,200);
-    grass = new THREE.Mesh(grassGeometry, grassMaterial);
-    grass.position.set(0,0,0);
-    obj.add(grass);
-    */
 }
 
 
@@ -204,7 +189,7 @@ function createGrassGround(obj){
 function createStructure() {
     wholeStructure = new THREE.Object3D();
     var ground = new THREE.Object3D();
-    createGrassGround(ground);
+    createGrassGround();
     scene.add(ground);
 
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
