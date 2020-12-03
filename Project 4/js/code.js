@@ -5,12 +5,144 @@ var pressedKeyActions = {};
 var delta;
 var clock = new THREE.Clock();
 var orbitControls;
-
-var allMeshes = [];
+var allMeshes;
 
 var ortCam;
 
+
+var ball;
+
 /*----------Classes---------*/
+class MeshList {
+    basics = [];
+    phongs = [];
+    meshes = [];
+    lightningToggle = true;
+    wireframeToggle = false;
+
+    add(mesh, basicMaterial, phongMaterial) {
+        this.meshes.push(mesh);
+
+        this.basics.push(basicMaterial);
+        this.phongs.push(phongMaterial);
+
+        //Updating the material in case its current material or wireframe do not match the currently active ones
+        this.updateMaterial(this.meshes.length - 1);
+    }
+
+    /**
+     * Returns the list that contains the currently used materials (MeshBasicMaterial if lightning is off,
+     * MeshPhongMaterial if it's on)
+     */
+    getCurrentMaterials() {
+        return this.lightningToggle ? this.basics : this.phongs;
+    }
+
+    /**
+     * Switches the materials of all meshes from Basic to Phong or from Phong to Basic,
+     * depending on the toggle of lightning
+     */
+    switchMaterials() {
+        this.lightningToggle = !this.lightningToggle;
+        this.updateMaterials();
+    }
+
+    /**
+     * Updates the meshe's material's characteristics at the given index depending 
+     * on the current lightning and wireframe toggles
+     * @param {*} index 
+     * The index of the mesh to update
+     * @param {*} materials 
+     * Optional list with the materials to be applied
+     */
+    updateMaterial(index, materials = this.getCurrentMaterials()) {
+        this.meshes[index].material = materials[index];
+        this.basics[index].wireframe = this.wireframeToggle;
+        this.phongs[index].wireframe = this.wireframeToggle;
+    }
+
+    /**
+     * Updates all the meshes's material's characteristics depending 
+     * on the current lightning and wireframe toggles
+     */
+    updateMaterials() {
+        var materials = this.getCurrentMaterials();
+
+        for(var i = 0; i < this.meshes.length; i++) {
+            this.updateMaterial(i, materials);
+        }
+    }
+
+    /**
+     * Switches the wireframe toggle of all meshes
+     */
+    switchWireframes() {
+        this.wireframeToggle = !this.wireframeToggle;
+        this.updateMaterials();
+    }
+}
+
+class GolfBall {
+    ball;
+    jumpingFrom;
+    jumpingTo;
+    height;
+    timeElapsed = 0;
+    maxHorizontal;
+    secondsBetweenJumps;
+    direction;
+    ballRadius;
+
+    constructor(jumpingFrom, jumpingTo, height, secondsBetweenJumps, ballRadius) {
+        this.maxHorizontal = jumpingFrom.distanceTo(jumpingTo);
+
+        this.jumpingFrom = jumpingFrom;
+        this.jumpingTo = jumpingTo;
+        this.direction = jumpingFrom.clone().sub(jumpingTo).normalize();
+        this.height = height;
+        this.secondsBetweenJumps = secondsBetweenJumps;
+        this.ballRadius = ballRadius;
+
+        //Creating the ball
+        var basicMaterial = new THREE.MeshBasicMaterial({color: 0xBBBBBB});
+        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, specular: 0xAAAAAA});
+        var sphere = new THREE.SphereGeometry(this.ballRadius, 50, 50);
+        this.ball = new THREE.Mesh(sphere, basicMaterial);
+
+        this.setPosition(jumpingFrom);
+
+        allMeshes.add(this.ball, basicMaterial, phongMaterial);
+        scene.add(this.ball);
+    }
+
+    setPosition(newPosition) {
+        this.ball.position.set(newPosition.x, newPosition.y, newPosition.z);
+    }
+    
+    update() {
+        this.timeElapsed += delta;
+        var x;
+        var t = this.timeElapsed % this.secondsBetweenJumps;
+
+        if(Math.floor(this.timeElapsed / this.secondsBetweenJumps) % 2 == 0) {
+            //Moving forward
+            x = this.maxHorizontal * t / this.secondsBetweenJumps;
+        }
+        else {
+            //Moving back
+            x = this.maxHorizontal - (this.maxHorizontal * t / this.secondsBetweenJumps);
+        }
+
+        //Formula to calculate the height of a parabula given a t
+        var y = -4 * this.height * t * (t - this.secondsBetweenJumps) / (this.secondsBetweenJumps * this.secondsBetweenJumps);
+
+        var newPosition = this.direction.clone().multiplyScalar(x);
+        newPosition.y = y;
+        newPosition.add(this.jumpingFrom);
+
+        this.setPosition(newPosition);
+    }
+}
 
 /*----------Methods---------*/
 
@@ -158,7 +290,10 @@ function display() {
 }
 
 function addKeyActions() {
-
+    pressedKeyActions[73] = function () {allMeshes.switchMaterials()} //I
+    pressedKeyActions[105] = function () {allMeshes.switchMaterials()} //i
+    pressedKeyActions[87] = function () {allMeshes.switchWireframes()} //W
+    pressedKeyActions[119] = function () {allMeshes.switchWireframes()} //w
 }
 
 /**
@@ -190,7 +325,11 @@ function init() {
 
     document.body.appendChild(renderer.domElement);
 
+    allMeshes = new MeshList();
+    
     createStructure();
+
+    //ball = new GolfBall(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 100), 100, 2, 25);
 
     //Adding key actions
     addKeyActions();
@@ -222,7 +361,11 @@ function update() {
     }
 
     orbitControls.update();
+
+    //Updating objects
+    ball.update();
 }
+
 
 function replaceEveryonesMaterials() {
     //Switching all mesh's materials with the current global one
