@@ -10,13 +10,14 @@ var golfFlag;
 
 var pauseCamera;
 var paused = false;
-var reset = false;
 
 var ball;
 var ballMoving = false;
 
 var directionalLight;
 var pointLight;
+
+var camX = 500, camY = 500, camZ = 500;
 
 /*----------Classes---------*/
 class MeshList {
@@ -86,6 +87,18 @@ class MeshList {
         this.wireframeToggle = !this.wireframeToggle;
         this.updateMaterials();
     }
+
+    reset() {
+        if (!this.lightningToggle) {
+            this.switchMaterials();
+            this.lightningToggle = true;
+        }
+
+        if (this.wireframeToggle) {
+            this.switchWireframes();
+            this.wireframeToggle = false;
+        }
+    }
 }
 
 class GolfBall {
@@ -112,7 +125,7 @@ class GolfBall {
         //Creating the ball
         var ballBumpMap = new THREE.TextureLoader().load("img/golfball_bump.jpg");
         var basicMaterial = new THREE.MeshBasicMaterial({color: 0xBBBBBB});
-        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, shininess: 300, bumpMap: ballBumpMap});
+        var phongMaterial = new THREE.MeshPhongMaterial({color: 0xBBBBBB, shininess: 300, bumpMap: ballBumpMap, specular: 0x222222});
         var sphere = new THREE.SphereGeometry(this.ballRadius, 50, 50);
         this.ball = new THREE.Mesh(sphere, basicMaterial);
 
@@ -274,7 +287,7 @@ function createStructure() {
     ]);
     scene.background = texture;
 
-    ball = new GolfBall(new THREE.Vector3(0, 2.5, 0), new THREE.Vector3(100, 2.5, 100), 100, 2, 5);
+    ball = new GolfBall(new THREE.Vector3(0, 5, 0), new THREE.Vector3(100, 5, 100), 100, 2, 5);
 }
 
 function createPauseScreen() {
@@ -292,22 +305,17 @@ function createPauseScreen() {
 function onResize() {
     'use strict';
 
-    //TODO Change this depending on the camera
-
-    /*
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        perspCam.aspect = window.innerWidth / window.innerHeight;
-        perspCam.updateProjectionMatrix();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-        ortCam.left = window.innerWidth / - 2;
-        ortCam.right = window.innerWidth / 2;
-        ortCam.top = window.innerHeight / 2;
-        ortCam.bottom = window.innerHeight / - 2;
-        ortCam.updateProjectionMatrix();
-    }
-    */
+    pauseCamera.left = window.innerWidth / - 2;
+    pauseCamera.right = window.innerWidth / 2;
+    pauseCamera.top = window.innerHeight / 2;
+    pauseCamera.bottom = window.innerHeight / - 2;
+    pauseCamera.updateProjectionMatrix();
 }
 
 /**
@@ -401,9 +409,9 @@ function init() {
     window.addEventListener("resize", onResize);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.x = 500;
-    camera.position.y = 500;
-    camera.position.z = 500;
+    camera.position.x = camX;
+    camera.position.y = camY;
+    camera.position.z = camZ;
     camera.lookAt(scene.position);
 
     pauseCamera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
@@ -476,7 +484,27 @@ function pause() {
 }
 
 function reset() {
+    allMeshes.reset();
+    
+    // reset flag
+    golfFlag.rotation.set(0, 0, 0);
+
     ball.reset();
+
+    ballMoving = false; 
+
+    // reset lights
+    directionalLight.visible = true;
+    pointLight.visible = true;
+
+    // if there is a pause screen, remove it
+    renderer.autoClear = true;
+    paused = false;
+
+    // reset cam
+    camera.position.x = camX;
+    camera.position.y = camY;
+    camera.position.z = camZ;
 }
 
 function switchDirectionalLight() {
