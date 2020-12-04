@@ -505,6 +505,9 @@ function reset() {
     camera.position.x = camX;
     camera.position.y = camY;
     camera.position.z = camZ;
+    camera.lookAt(scene.position);
+
+    orbitControls.reset();
 }
 
 function switchDirectionalLight() {
